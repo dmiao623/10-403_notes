@@ -5,3 +5,12 @@
 *.log
 *.synctex.gz
 *.out
+
+# BibTeX artifacts
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+
+# archived files
+*.archive
