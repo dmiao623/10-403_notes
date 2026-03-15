@@ -1087,6 +1087,8 @@
 
   \textbf{MBRL from High-Dimensional Sensory Input}: The state is observed and given in terms of high-dimensional sensory input such as video. The two approaches to addressing this is recurrence on image space (e.g., deterministc video prediction) or recurrence in latent space. \\
 
+\subsection{MBRL in State-Space}
+
   \textbf{Probabilistic Ensembles with Trajectory Sampling (PETS) \cite{chua2018deep}}: Model representations of the environment are augmented with uncertainty predictions. Specifically, there are two types: \textbf{epistemic uncertainty} is due to the lack of data (e.g., for a deterministic system), and \textbf{aleatoric uncertainty} is due to the inherent stochasticity of the system The model outputs a Gaussian distribution over next states given the current state and action by predicting the mean and covariance matrix:
   \BE{
     \calL_\phi = -\f{1}{N} \sum_{i=1}^N \log p_\phi(s_i'\mid s_i,a_i).
@@ -1103,10 +1105,70 @@
     \BA{
       s_{k+1}^{(b)}&\sim p_k(s_k^{(b)},a_k) \\
       r_k^{(b)} &= r(s_k^{(b)}, a_k) \\
-      R^{(b)}(\vva)=\sum_{k=t}^T r(s_k^{(b)},a_k)
+      R^{(b)}(\vva)&=\sum_{k=t}^T r(s_k^{(b)},a_k)
     }
     Then, the return for $\vva$ is said to be the average across all $R^{(b)}(\vva)$. Note that the states are not averaged across ensembles.
   }
+
+\subsection{MBRL in Sensory-input Space}
+
+  \textbf{Approaches to MBRL in Sensory-input Space}: There are two main approaches to MBRL in sensory-input space:
+  \BI{
+  \item
+    \textbf{Unrolling in the observation space}: The environment model is given observations $o_{t-k},\dots,o_t, a_t$ and asked to predict $o_{t+1}$.
+  \item
+    \textbf{Unrolling in the latent space}: The environment model is given a latent state $s_t$ representing observations $o_{t-k},\dots,o_t$ as well as $a_t$ and asked to predict $s_{t+1}$. \\
+  }
+
+  \textbf{Action-Conditional Video Predicting using Deep Networks in Atari Games \cite{oh2015action}}: Trains a neural network that given an image sequence and an actions, predicts the pixels of the next frame using a standard $L_2$ objective. Using a naive approach, we face the problem of \textbf{error accumulation} where test-time rollouts have a distribution shift (similar to imitation learning). This can be solved by:
+  \BN{
+  \item Progressively unrolling the horizon $k$ at training time so that the model learns to handle its mistakes:
+    \BE{
+      \calL(\theta)=\f{1}{N} \sum_{i=1}^N \bnm{f(a^{(i)}_{t+1}, f(a^{(i)}_t,o^{(i)}_t;\theta);\theta)-o^{(i)}_{t+2}}+\bnm{f(a^{(i)}_t,o^{(i)}_t;\theta)-o^{(i)}_{t+1}}.
+    }
+    This fails for non-regressive, multi-modal models and highly stochastic environments because the model rollout and the ground truth and deviate significantly.
+  \item Add noise to each observation to simulate predictions of the networks. \\
+  }
+
+  \textbf{Model-Based Reinforcement Learning for Atari \cite{kaiser2019model}}: Similar architecture to before but also make predictions on rewards: First initialize $\pi_\theta$ and $\calD_\text{env}$. In each iteration, run the policy and update $\calD_\text{env}$. Then, train the dynamics model by regressing $f(\{o_{t-4},\dots,o_t\},a_t,z;\theta)$ to $(o_{t+1}, r_{t+1})$. Then, sample $o_{t-4},\dots,o_t\sim \calD_\text{env}$ and collect simulated experience $\calD_\text{model}$ for $50$ time steps using $\pi_\theta$ to select actions. Finally, update $\pi_\theta$ using PPO on trajectories $\calD_\text{model}\cup \calD_\text{env}$. 
+  \BI{
+  \item The paper uses a multi-model VQ-VAE for $f(\cdot;\theta)$. This inherently operates similar to an ensemble by encorporating epistemic uncertainty, which mitigates the need to use an actual ensemble (as used in PETS). 
+  \item Compared to a base model-free PPO model, the model-based method required much less (actual) environment interactions to read human-level performance.
+  \item Disadvantages: video prediction loss does not reflect task performance (predicts task-irrelevant objects), and is extremely slow. \\
+  }
+
+  \textbf{Temporal Difference for Model Predictive Control (TD-MPC) \cite{hansen2022temporal}}: Train an encoder $E_\phi$ and a decoder $D_\psi$ with an autoencoder loss
+  \BE{
+    \min_{\phi,\psi} \bnm{D_\psi(E_\phi(o_t))-o_t}.
+  }
+  The encoder also encoporates task-relevant losses such as action prediction, reward prediction, and $Q$-value prediction. Then, the dynamics prediction is performed entirely on the latent space:
+  \BE{
+    \min_\theta \bnm{f_\theta(E_\phi(o_{t-K}),\dots,E_\phi(o_t))-E_\phi(o_{t+1})}.
+  }
+
+  \textbf{Tasked-Oriented Latent Dynamics (TOLD)}: TOLD minimizes the objective
+  \BE{
+    \calJ(\theta;\Gamma)=\sum_{i=t}^{t+H} \omega^{i-t} \calL(\theta;\Gamma_i)
+  }
+  where
+  \BA{
+    \calL(\theta;\Gamma_i)
+    &=\lambda_1\underbrace{\bnm{R_\theta(\vvz_i,\vva_i)-r_i}_2^2}_\text{reward} \\
+    &\;+\lambda_2\underbrace{\bnm{Q_\theta(\vvz_i,\vva_i)-(r_i+\gamma Q_{\theta^-}(\vvz_{i+1},\pi_\theta(\vvz_{i+1})))}_2^2}_\text{value} \\
+    &\;+\lambda_3\underbrace{\bnm{d_\theta(\vvz_i,\vva_i)-h_{\theta^-}(\vvs_{i+1}))}_2^2}_\text{latent state consistency}.
+  }
+  Here, $\theta^-$ represent the parameters of a target network that is a moving average of $\theta$. Then, the policy minimizes
+  \BE{
+    \calJ_\pi(\theta;\Gamma)=-\sum_{i=t}^{t+H} \omega^{i-t}Q_\theta(\vvz_i,\pi_\theta(\mathrm{sg}(\vvz_i))),
+  }
+  where the $\mathrm{sg}$ operator represents stop-gradient, preventing the gradient from updating the latent state encoder.
+
+  \textbf{Planning in Latent-Space}: We can estimate the return of a trajectory via
+  \BE{
+    \Eb_{\Gamma}\;\underbrace{\gamma^HQ_\theta(\vvz_H,\vva_H)}_\text{value}+\underbrace{\sum_{t=0}^{H-1} \gamma^t R_\theta(\vvz_t,\vva_t)}_\text{rewards}.
+  }
+  This is used to maximize an evolutionary search method such as CEM (similar to PETS, but with a different dynamics model and a terminal value function). 
+
 
   
   \newpage
