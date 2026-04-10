@@ -30,16 +30,16 @@
 % │ Formatting Settings                             │
 % └─────────────────────────────────────────────────┘
 
-% theorem environment declarations
-\newtheorem{theorem}{Theorem}[section]
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{corollary}[theorem]{Corollary}
-\newtheorem{proposition}[theorem]{Proposition}
-\theoremstyle{definition}
-\newtheorem{definition}{Definition}
-\newtheorem{example}{Example}
-\theoremstyle{remark}
-\newtheorem{remark}{Remark}
+% theorem environment declarations (unsued)
+% \newtheorem{theorem}{Theorem}[section]
+% \newtheorem{lemma}[theorem]{Lemma}
+% \newtheorem{corollary}[theorem]{Corollary}
+% \newtheorem{proposition}[theorem]{Proposition}
+% \theoremstyle{definition}
+% \newtheorem{definition}{Definition}
+% \newtheorem{example}{Example}
+% \theoremstyle{remark}
+% \newtheorem{remark}{Remark}
 
 % removes spacing between paragraphs
 \setlist{partopsep=-\parskip,parsep=0pt}
@@ -52,9 +52,6 @@
 
 % text on page before starting a new page
 \setlength{\textheight}{21cm}
-
-% removes indentation before paragraphs
-\setlength{\parindent}{0pt}
 
 % increased context in error log
 \setcounter{errorcontextlines}{1000}
@@ -121,6 +118,62 @@
   \graphicspath{ {./figures/} }
 }{
 
+}
+
+\iftoggle{@@includecode}{
+  \usepackage{minted}
+  \usepackage{xcolor}
+
+  \definecolor{LightGray}{gray}{0.9}
+  \setminted{
+    baselinestretch=1.2,
+    bgcolor=LightGray,
+    fontsize=\footnotesize,
+    xleftmargin=14pt,
+    baselinestretch=0.88,
+    numbersep=4pt,
+    linenos,
+    mathescape,
+    style=tango
+  }
+  \renewcommand{\theFancyVerbLine}{\ttfamily\scriptsize\arabic{FancyVerbLine}}
+}{
+
+}
+
+\iftoggle{@@includebiblio}{
+  \usepackage[
+    backend=biber,
+    sorting=none,
+    sortcites=true,
+  ]{biblatex}
+  \addbibresource{references.bib}
+}{
+
+}
+
+\iftoggle{@@includetikz}{
+  \usepackage{tikz}
+  \usetikzlibrary{positioning,arrows.meta}
+}{
+
+}
+
+\iftoggle{@@includeurl}{
+  \usepackage{xcolor}
+  \usepackage{hyperref}
+  \usepackage[normalem]{ulem}
+}
+
+\iftoggle{@@parspace}{
+  \setlength{\parskip}{\baselineskip}
+}{
+
+}
+
+\iftoggle{@@parindent}{
+}{
+  \setlength{\parindent}{0pt}
 }
 
 \makeatother
@@ -267,6 +320,60 @@
 \newcommand{\vvY}{\vec{Y}}
 \newcommand{\vvZ}{\vec{Z}}
 
+% \mathbf
+\newcommand{\vba}{\mathbf{a}}
+\newcommand{\vbb}{\mathbf{b}}
+\newcommand{\vbc}{\mathbf{c}}
+\newcommand{\vbd}{\mathbf{d}}
+\newcommand{\vbe}{\mathbf{e}}
+\newcommand{\vbf}{\mathbf{f}}
+\newcommand{\vbg}{\mathbf{g}}
+\newcommand{\vbh}{\mathbf{h}}
+\newcommand{\vbi}{\mathbf{i}}
+\newcommand{\vbj}{\mathbf{j}}
+\newcommand{\vbk}{\mathbf{k}}
+\newcommand{\vbl}{\mathbf{l}}
+\newcommand{\vbm}{\mathbf{m}}
+\newcommand{\vbn}{\mathbf{n}}
+\newcommand{\vbo}{\mathbf{o}}
+\newcommand{\vbp}{\mathbf{p}}
+\newcommand{\vbq}{\mathbf{q}}
+\newcommand{\vbr}{\mathbf{r}}
+\newcommand{\vbs}{\mathbf{s}}
+\newcommand{\vbt}{\mathbf{t}}
+\newcommand{\vbu}{\mathbf{u}}
+\newcommand{\vbv}{\mathbf{v}}
+\newcommand{\vbw}{\mathbf{w}}
+\newcommand{\vbx}{\mathbf{x}}
+\newcommand{\vby}{\mathbf{y}}
+\newcommand{\vbz}{\mathbf{z}}
+\newcommand{\vbA}{\mathbf{A}}
+\newcommand{\vbB}{\mathbf{B}}
+\newcommand{\vbC}{\mathbf{C}}
+\newcommand{\vbD}{\mathbf{D}}
+\newcommand{\vbE}{\mathbf{E}}
+\newcommand{\vbF}{\mathbf{F}}
+\newcommand{\vbG}{\mathbf{G}}
+\newcommand{\vbH}{\mathbf{H}}
+\newcommand{\vbI}{\mathbf{I}}
+\newcommand{\vbJ}{\mathbf{J}}
+\newcommand{\vbK}{\mathbf{K}}
+\newcommand{\vbL}{\mathbf{L}}
+\newcommand{\vbM}{\mathbf{M}}
+\newcommand{\vbN}{\mathbf{N}}
+\newcommand{\vbO}{\mathbf{O}}
+\newcommand{\vbP}{\mathbf{P}}
+\newcommand{\vbQ}{\mathbf{Q}}
+\newcommand{\vbR}{\mathbf{R}}
+\newcommand{\vbS}{\mathbf{S}}
+\newcommand{\vbT}{\mathbf{T}}
+\newcommand{\vbU}{\mathbf{U}}
+\newcommand{\vbV}{\mathbf{V}}
+\newcommand{\vbW}{\mathbf{W}}
+\newcommand{\vbX}{\mathbf{X}}
+\newcommand{\vbY}{\mathbf{Y}}
+\newcommand{\vbZ}{\mathbf{Z}}
+
 % \hat
 \newcommand{\hha}{\hat{a}}
 \newcommand{\hhb}{\hat{b}}
@@ -322,12 +429,11 @@
 \newcommand{\hhZ}{\hat{Z}}
 
 % algebra
-\DeclareMathOperator{\spn}{span}
-\DeclareMathOperator{\rank}{rank}
-\DeclareMathOperator{\gker}{gker}
-\DeclareMathOperator{\proj}{proj}
-\DeclareMathOperator{\img}{img}
-\DeclareMathOperator{\Id}{Id}
+\DeclareMathOperator{\spn}{spa}
+\DeclareMathOperator{\rank}{ran}
+\DeclareMathOperator{\gker}{gke}
+\DeclareMathOperator{\proj}{pro}
+\DeclareMathOperator{\img}{im}
 
 % calculus
 \renewcommand{\d}{\;\mathrm{d}}
@@ -376,20 +482,20 @@
 \newcommand{\MVV}[1]{\begin{Vmatrix} #1 \end{Vmatrix}}
 
 % number theory
-\DeclareMathOperator*{\lcm}{lcm}
+\DeclareMathOperator{\lcm}{lc}
 \DeclareMathOperator*{\argmin}{argmin}
 \DeclareMathOperator*{\argmax}{argmax}
 
 % probability
 \renewcommand{\P}[1]{\mathbf{P}\left\{ #1 \right\}}
 \newcommand{\E}[1]{\mathbf{E}\left[ #1 \right]}
-\newcommand{\Eb}{\mathbf{E}}
 \newcommand{\Pc}[2]{\mathbf{P}\left\{ #1 \mid #2 \right\}}
+\newcommand{\Eb}{\mathbf{E}}
 \newcommand{\Ec}[2]{\mathbf{E}\left[ #1 \mid #2 \right]}
 \newcommand{\Ep}[2]{\mathbf{E}_{#1}\left[ #2\right]}
 \newcommand{\Epc}[3]{\mathbf{E}_{#1}\left[ #2 \mid #3 \right]}
-\DeclareMathOperator{\Var}{Var}
-\DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator{\Var}{Va}
+\DeclareMathOperator{\Cov}{Co}
 
 % values
 \newcommand{\eset}{\varnothing}
