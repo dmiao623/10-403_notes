@@ -98,11 +98,11 @@
   \textit{Proof}:
   \BA{
     v_\pi(s)
-    &=\Ec{G_t}{s_t=s} 
-    &=\Ec{R_{t+1}+\gamma G_{t+1}}{s_t=s} 
-    &=\Ec{R_{t+1}}{s_t=s}+\gamma\Ec{G_{t+1}}{s_t=s} 
-    &=\sum_{a} \pi(a\mid s)r(s,a)+\gamma\sum_{a} \pi(a\mid s)\Ec{G_{t+1}}{s_t=s,a_t=a} 
-    &=\sum_{a} \pi(a\mid s)r(s,a)+\gamma\sum_{a} \pi(a\mid s)\sum_{s'} P(s'\mid s,a) V_\pi(s') 
+    &=\Ec{G_t}{s_t=s} \\
+    &=\Ec{R_{t+1}+\gamma G_{t+1}}{s_t=s} \\
+    &=\Ec{R_{t+1}}{s_t=s}+\gamma\Ec{G_{t+1}}{s_t=s} \\
+    &=\sum_{a} \pi(a\mid s)r(s,a)+\gamma\sum_{a} \pi(a\mid s)\Ec{G_{t+1}}{s_t=s,a_t=a} \\
+    &=\sum_{a} \pi(a\mid s)r(s,a)+\gamma\sum_{a} \pi(a\mid s)\sum_{s'} P(s'\mid s,a) v_\pi(s') \\
     &=\sum_{a} \pi(a\mid s)\bbb{r(s,a)+\sum_{s'} P(s'\mid s,a)v_\pi(s')}
   }
 
@@ -113,9 +113,9 @@
   \textit{Proof}:
   \BA{
     q_\pi(s)
-    &=\Ec{G_t}{s_t=s,a_t=a} 
-    &=r(s,a)+\gamma\Ec{G_{t+1}}{s_t=s,a_t=a} 
-    &=r(s,a)+\sum_{s'} P(s'\mid s,a)\Ec{G_{t+1}}{s_{t+1}=s'} 
+    &=\Ec{G_t}{s_t=s,a_t=a} \\
+    &=r(s,a)+\gamma\Ec{G_{t+1}}{s_t=s,a_t=a} \\
+    &=r(s,a)+\sum_{s'} P(s'\mid s,a)\Ec{G_{t+1}}{s_{t+1}=s'} \\
     &=r(s,a)+\sum_{s'} \bbb{P(s'\mid s,a) \sum_{a'} \pi(a'\mid s')q_\pi(s',a')}
   }
 
@@ -142,16 +142,16 @@
   \textbf{Solving Bellman Expectation Equations}: Value functions are a linear system of equations:
   \BA{
     v_\pi
-    &=r^\pi_s+\gamma T_{s's}^\pi v_\pi 
-    &v_\pi\in\bbR^{\bab{\calS}\times 1} 
-    &r_s^\pi=\sum_a \pi(a\mid s)r(s,a)\in \bbR^{\bab{\calS}\times 1} 
+    &=r^\pi_s+\gamma T_{s's}^\pi v_\pi \\
+    &v_\pi\in\bbR^{\bab{\calS}\times 1} \\
+    &r_s^\pi=\sum_a \pi(a\mid s)r(s,a)\in \bbR^{\bab{\calS}\times 1} \\
     &T^\pi_{s's}=\sum_a \pi(a\mid s)P(s'\mid s,a)\in\bbR^{\bab{\calS}\times\bab{\calS}}
   }
   This can be solved using matrix inversion $v_\pi=(I-\gamma T^\pi)^{-1}r^\pi$. 
 
   \textbf{Advantage}:
   \BE{
-    a_\pi(s,a):=q_\pi(s,a)-v_\pi(s)
+    A_\pi(s,a):=q_\pi(s,a)-v_\pi(s)
   }
 
   \textbf{Bellman Expectation Operator}: 
@@ -188,7 +188,7 @@
 
   \hl{\textbf{Monte-Carlo Policy Evaluation}}: Learn $v_\pi(s)$ from episodes of experience under $\pi$:
   \BA{
-    N(s_t)&\leftarrow N(s_t)+1 
+    N(s_t)&\leftarrow N(s_t)+1 \\
     V(s_t)&\leftarrow V(s_t)+\frac{1}{N(s_t)} (G_t-V(s_t))
   }
   \BI{
@@ -248,7 +248,7 @@
 
   \hl{\textbf{Double Q-Learning}}: Train two functions $Q_1,Q_2$. Perform $Q$-learning on different time steps and pick at reandom which function to update. Use $Q_2$ to compute the next state for $Q_1$ and vice versa:
   \BA{
-    a^*&\leftarrow \argmax_a Q_1(s',a) 
+    a^*&\leftarrow \argmax_a Q_1(s',a) \\
     Q_1(s_t,a_t)&\leftarrow Q(s_t,a_t)+\alpha(R_{t+1}+\gamma Q_2(s',a^*)-Q_1(s_t,a_t))
   }
   This works because it decouples selecting the best action from assigning a value to the best action. 
@@ -266,27 +266,27 @@
   
   Function approximation: represent Q-values as a learned function parameterized by $\theta$. 
 
-  \textbf{Neural representations of value functions}: Approximate $v_\pi$ and $q_\pi$ with $\hat{v}_\theta(s_t)$ and $\hat{q}_\theta(s_t,a_t)$ where $\bab{\theta}<\bab{\calS}$. Goal is to find
+  \textbf{Neural representations of value functions}: Approximate $v_\pi$ and $q_\pi$ with $V_\theta(s_t)$ and $Q_\theta(s_t,a_t)$ where $\bab{\theta}<\bab{\calS}$. Goal is to find
   \BE{
-    \argmin_\theta J(\theta)=\Ep{\pi}{(v_\pi(s)-\hat{v}_\theta(s))^2}.
+    \argmin_\theta J(\theta)=\Ep{\pi}{(v_\pi(s)-V_\theta(s))^2}.
   }
   The corresponding gradient decent updates are
   \BE{
-    \Delta \theta=-\f{1}{2} \alpha\nabla_\theta J(\theta)=\alpha \Ep{\pi}{(v_\pi(s)-\hat{v}_\theta(s))\nabla_\theta \hat{v}_\theta(s)}
+    \Delta \theta=-\f{1}{2} \alpha\nabla_\theta J(\theta)=\alpha \Ep{\pi}{(v_\pi(s)-V_\theta(s))\nabla_\theta V_\theta(s)}
   }
   where the \textbf{target} is $v_\pi(s)$.
   \BI{
-    \item Target is return $G_t$ in MC policy iteration, $R_{t+1}+\gamma\hat{v}_\theta(s_{t+1})$ in TD(0). 
+    \item Target is return $G_t$ in MC policy iteration, $R_{t+1}+\gamma V_\theta(s_{t+1})$ in TD(0).
   }
 
   Loss function is similar for action value functions. For example, for TD estimation,
   \BE{
-    \Delta\theta =-\alpha\nabla_\theta J(\theta)=\alpha(R_{t+1} + \gamma\max_a \hat{q}_\theta(s_{t+1},a)-\hat{q}_\theta(s_t,a_t)) \nabla_\theta \hat{q}_\theta (s_t,a_t)
+    \Delta\theta =-\alpha\nabla_\theta J(\theta)=\alpha(R_{t+1} + \gamma\max_a Q_\theta(s_{t+1},a)-Q_\theta(s_t,a_t)) \nabla_\theta Q_\theta (s_t,a_t)
   }
 
   \textbf{Deadly Triad}: Naive Q-Learning using a parameterized Q function and a least-squares objective
   \BE{
-    \min_\theta \f{1}{2}\bpa{Q_\theta(s,a)-(r(s,a)+\gamma\max_{a'} \hat{Q}_\theta(s',a'))}^2
+    \min_\theta \f{1}{2}\bpa{Q_\theta(s,a)-(r(s,a)+\gamma\max_{a'} Q_\theta(s',a'))}^2
   }
   is off-policy, uses function approximation, and bootstrapping, which makes convergence and efficient learning extremely difficult. 
 
@@ -300,7 +300,7 @@
 
   \hl{\textbf{Double DQN}}: Deep Q-Learning using the online network to select the next action but using the target network to evaluate it:
   \BA{
-    a^*&=\argmax_a Q_\theta(s',a') 
+    a^*&=\argmax_a Q_\theta(s',a') \\
     y^\text{Double-DQN}&=R_{t+1}+\gamma Q_{\theta^-}(s',a^*)
   }
 
@@ -311,7 +311,7 @@
 
   \textbf{Prioritizing Replays}: Within the experience replay buffer, weight each experience by its ``surprise'' or DQN error:
   \BA{
-    p_i&=r_i+\gamma\max_{a} Q_{\theta^-}(s'_i,a)-Q_{\theta}(s'_i,a) 
+    p_i&=r_i+\gamma\max_{a} Q_{\theta^-}(s'_i,a)-Q_{\theta}(s'_i,a) \\
     P(i)&=\f{p_i^\alpha}{\sum_k p_k^\alpha}.
   }
   \BI{
@@ -342,8 +342,8 @@
 
   \hl{\textbf{Cross-entropy Method}}: Initialize $\mu_0\leftarrow 0$, $\Sigma_0\leftarrow I$. For each step, sample $\theta_i\in\calN(\mu,\sigma^2I)$ for $i=1,\dots,N$. For each, evaluate over $L$ trials and take top $\bcl{\rho N}$ $\theta_i$ by mean overall reward. Then, update via
   \BA{
-    \mu_t&\leftarrow \f{1}{K}\sum_{i\in \varepsilon}\theta_i 
-    \Sigma_t&\leftarrow \f{1}{K}\sum_{i\in\varepsilon}(\theta_i-\mu_{t+1})(\theta_i-\mu_{t+1})^\top. 
+    \mu_t&\leftarrow \f{1}{K}\sum_{i\in \varepsilon}\theta_i \\
+    \Sigma_t&\leftarrow \f{1}{K}\sum_{i\in\varepsilon}(\theta_i-\mu_{t+1})(\theta_i-\mu_{t+1})^\top.
   }
   \BI{
     \item Optionally, add smoothing $\mu_t\leftarrow (1-\alpha)\mu_t+\alpha \mu_{t-1}$, $\Sigma_t\leftarrow (1-\alpha)\Sigma_t+\alpha \Sigma_{t-1}$. 
@@ -356,10 +356,10 @@
   where $P_\mu(\theta)=\calN(\mu,\sigma^2I)$ ($\sigma^2$ is a constant hyperparameter) and $F(\theta)=\Ep{\tau\sim\pi_0,s_0\sim\mu_0(s)}{R(\tau)}$. The corresponding gradient update is
   \BA{
     \nabla_\mu \Ep{\theta\sim P_\mu(\theta)} {F(\theta)}
-    &=\nabla_\mu \int P_\mu(\theta)F(\theta)\d \theta 
-    &=\int P_\mu(\theta)\cdot\f{\nabla_\mu P_\mu(\theta)}{P_\mu(\theta)}F(\theta)\d \theta 
-    &=\int P_\mu(\theta)\cdot\nabla_\mu \log P_\mu(\theta) F(\theta)\d \theta 
-    &=\Ep{\theta\sim P_\mu(\theta)}{\nabla_\mu \log P_\mu(\theta) F(\theta)} 
+    &=\nabla_\mu \int P_\mu(\theta)F(\theta)\d \theta \\
+    &=\int P_\mu(\theta)\cdot\f{\nabla_\mu P_\mu(\theta)}{P_\mu(\theta)}F(\theta)\d \theta \\
+    &=\int P_\mu(\theta)\cdot\nabla_\mu \log P_\mu(\theta) F(\theta)\d \theta \\
+    &=\Ep{\theta\sim P_\mu(\theta)}{\nabla_\mu \log P_\mu(\theta) F(\theta)} \\
     &\approx \f{1}{N} \sum_{i=1}^N \nabla_\mu \log P_\mu(\theta) \vert_{\theta=\theta_i} F(\theta_i)
   }
   where $\theta_i\sim P_\mu(\theta)$. We also have that
@@ -385,7 +385,7 @@
   }
   In general, a reasonable policy objective is
   \BA{
-    \max_\theta U(\theta)&=\Ep{\tau\sim P(\tau;\theta)}{R(\tau)}=\sum_{\tau} P(\tau;\theta)R(\tau) 
+    \max_\theta U(\theta)&=\Ep{\tau\sim P(\tau;\theta)}{R(\tau)}=\sum_{\tau} P(\tau;\theta)R(\tau) \\
     P(\tau;\theta)&=\rho_0(s_0)\prod_{t=0}^H \underbrace{P(s_{t+1}\mid a_t,s_t)}_\text{dynamics}\underbrace{\pi_\theta(a_t\mid s_t)}_\text{policy}
   }
   In this form, backpropogation is not directly applicable because to get $\nabla_\theta P(\tau;\theta)$ requires knowing the dynamics of the environment.
@@ -401,11 +401,11 @@
   \textbf{General Policy Score}: Consider the following expression for $P(\cdot)$ continuous, differentiable, and easy to sample:
   \BA{
     \nabla_\theta \Ep{x\sim P_\theta(x)}{f(x)}
-    &=\nabla_\theta \int P_\theta(x)f(x) \d x
-    &=\int \nabla_\theta P_\theta(x)f(x) \d x
-    &=\int \f{\nabla_\theta P_\theta(x)}{P_\theta(x)} P_\theta(x)f(x)\d x 
-    &=\int P_\theta(x)\cdot \nabla_\theta \log P_\theta(x)f(x)\d x
-    &=\Ep{x\sim P_\theta(x)}{\nabla_\theta \log P_\theta(x)f(x)} 
+    &=\nabla_\theta \int P_\theta(x)f(x) \d x \\
+    &=\int \nabla_\theta P_\theta(x)f(x) \d x \\
+    &=\int \f{\nabla_\theta P_\theta(x)}{P_\theta(x)} P_\theta(x)f(x)\d x \\
+    &=\int P_\theta(x)\cdot \nabla_\theta \log P_\theta(x)f(x)\d x \\
+    &=\Ep{x\sim P_\theta(x)}{\nabla_\theta \log P_\theta(x)f(x)} \\
     &\approx \f{1}{N}\sum_{i=1}^N \nabla_\theta \log P_\theta(x^{(i)})f(x^{(i)}).
   }
   This form is easier to work with because one only needs to evaluate $\nabla_\theta \log P_\theta(x)$ for $x$ sampled from $P_\theta(x)$.
@@ -417,8 +417,8 @@
   \textbf{Policy Scores for Gaussian and Softmax Policies}: We have that
   \BA{
     \nabla_\theta \log P_\theta(\tau)
-    &=\nabla_\theta \log \bpa{\prod_{t=0}^T P(s_{t+1}^{(i)}\mid s_t^{(i)},a_t^{(i)})\pi_\theta(a_t^{(i)}\mid s_t^{(i)})} 
-    &=\nabla_\theta \sum_{t=0}^T \log\pi_\theta(a_t^{(i)}\mid s_t^{(i)}) 
+    &=\nabla_\theta \log \bpa{\prod_{t=0}^T P(s_{t+1}^{(i)}\mid s_t^{(i)},a_t^{(i)})\pi_\theta(a_t^{(i)}\mid s_t^{(i)})} \\
+    &=\nabla_\theta \sum_{t=0}^T \log\pi_\theta(a_t^{(i)}\mid s_t^{(i)}) \\
     &=\sum_{t=0}^T \nabla_\theta \log\pi_\theta(a_t^{(i)}\mid s_t^{(i)})
   }
   \BI{
@@ -428,7 +428,7 @@
       }
     \item For softmax policies,
       \BE{
-        \nabla_\theta \log\pi_\theta(a\mid s)=\nabla_\theta h_\theta(s,a)-\sum_{a'} \pi_\theta(s,a')\nabla_\theta h_\theta(s,a'),
+        \nabla_\theta \log\pi_\theta(a\mid s)=\nabla_\theta h_\theta(s,a)-\sum_{a'} \pi_\theta(a'\mid s)\nabla_\theta h_\theta(s,a'),
       }
       where $\pi_\theta(a\mid s)=\exp(h_\theta(s,a))/\sum_{a'}(\cdot)$. 
   }
@@ -455,7 +455,7 @@
   \BI{
   \item Motivation: We care about the advantage of an action conditioned on a state, not only when it has high returns:
     \BE{
-      G_t-v_\pi(s_t)\approx q_\pi(s_t,a_t)-v_\pi(s_t)=a_\pi(s_t,a_t).
+      G_t-v_\pi(s_t)\approx q_\pi(s_t,a_t)-v_\pi(s_t)=A_\pi(s_t,a_t).
     }
   }
 
@@ -477,12 +477,12 @@
   \item Compute advantages $A^\pi(s_t^{(i)},a_t^{(i)})=G_t^{(i)}-V_\phi^\pi(s_t^{(i)})$.
   \item Update $\theta$ via
     \BA{
-      \nabla_\theta U(\theta)&\approx \f{1}{N}\sum_{i=1}^N \sum_{t=1}^T \nabla_\theta \log\pi_\theta(a_t^{(i)}\mid s_t^{(i)}) a^\pi(s_t^{(i)},a_t^{(i)}) 
+      \nabla_\theta U(\theta)&\approx \f{1}{N}\sum_{i=1}^N \sum_{t=1}^T \nabla_\theta \log\pi_\theta(a_t^{(i)}\mid s_t^{(i)}) A_\pi(s_t^{(i)},a_t^{(i)}) \\
       \theta&\leftarrow \theta+\alpha\nabla_\theta U(\theta).
     }
   }
 
-  \hl{\textbf{Advantage Actor-Critic (A2C)}}: We can express $A^\pi(s_t^{(i)},a_t^{(i)})=Q^{\pi,\gamma}(s_t^{(i)},a_t^{(i)})-V_\phi^\pi(s_t^{(i)})$ where $Q^{\pi,\gamma}(s_t^{(i)},a_t^{(i)})=R(s_t^{(i)},a_t^{(i)})+\gamma V_\phi^\pi(s_{t+1}^{(i)})$. 
+  \hl{\textbf{Advantage Actor-Critic (A2C)}}: We can express $A_\pi(s_t^{(i)},a_t^{(i)})=Q_\phi^\pi(s_t^{(i)},a_t^{(i)})-V_\phi^\pi(s_t^{(i)})$ where $Q_\phi^\pi(s_t^{(i)},a_t^{(i)})=R(s_t^{(i)},a_t^{(i)})+\gamma V_\phi^\pi(s_{t+1}^{(i)})$. 
 
   \textbf{High Data Correlation}: Trajectory samples taken in actor-critic algorithms are high correlated, but stochastic gradient requires uncorrelated, uniformly sampled data. Furthermore, actor-critic algorithms are required to be on-policy (so experience buffer does not work). This can be solved in practice by running many RL environments in parallel. 
 
@@ -505,26 +505,26 @@
 
   \hl{\textbf{Performance Difference Lemma}}: 
   \BE{
-    J(\pi')-J(\pi)=\Ep{s\sim d^{\pi'},a\sim\pi'(\cdot\mid s)}{a_\pi(s,a)}.
+    J(\pi')-J(\pi)=\Ep{s\sim d^{\pi'},a\sim\pi'(\cdot\mid s)}{A_\pi(s,a)}.
   }
   \textit{Proof}: We have that
   \BA{
-    \Ep{a\sim\pi'}{a_\pi(s,a)}
-    &=\Ep{a\sim\pi'}{q_\pi(s,a)-v_\pi(s)} 
-    &=\Ep{a\sim\pi'}{q_\pi(s,a)} -v_\pi(s) 
+    \Ep{a\sim\pi'}{A_\pi(s,a)}
+    &=\Ep{a\sim\pi'}{q_\pi(s,a)-v_\pi(s)} \\
+    &=\Ep{a\sim\pi'}{q_\pi(s,a)} -v_\pi(s) \\
     &=\Ep{a\sim\pi'}{r(s,a)}+ \gamma\Ep{a\sim\pi',s'\sim P(\cdot\mid s,a)}{v_\pi(s',a)}-v_\pi(s).
   }
   For fixed $(s_t,a_t)$ from $\pi'$ with $s_0\sim \rho_0$, we have
   \BA{
-    \Ep{\pi'}{a_\pi(s_t,a_t)}&=\Ep{\pi'}{r_t}+\gamma \Ep{\pi'}{v_\pi(s_{t+1})}-\Ep{\pi'}{v_\pi(s_t)} 
-    \sum_{t=0}^\infty \gamma^t\Ep{\pi'}{a_\pi(s_t,a_t)}
-    &=\sum_{t=0}^\infty \gamma^t\bpa{\Ep{\pi'}{r_t}+\gamma \Ep{\pi'}{v_\pi(s_{t+1})}-\Ep{\pi'}{v_\pi(s_t)}} 
-    &=\bpa{\sum_{t=0}^\infty \gamma^t \Ep{\pi'}{r^t}}-\Ep{s_0\sim\rho_0}{v_\pi(s_0)} 
+    \Ep{\pi'}{A_\pi(s_t,a_t)}&=\Ep{\pi'}{r_t}+\gamma \Ep{\pi'}{v_\pi(s_{t+1})}-\Ep{\pi'}{v_\pi(s_t)} \\
+    \sum_{t=0}^\infty \gamma^t\Ep{\pi'}{A_\pi(s_t,a_t)}
+    &=\sum_{t=0}^\infty \gamma^t\bpa{\Ep{\pi'}{r_t}+\gamma \Ep{\pi'}{v_\pi(s_{t+1})}-\Ep{\pi'}{v_\pi(s_t)}} \\
+    &=\bpa{\sum_{t=0}^\infty \gamma^t \Ep{\pi'}{r^t}}-\Ep{s_0\sim\rho_0}{v_\pi(s_0)} \\
     &=J(\pi')-J(\pi).
   }
   By definition, we have
   \BE{
-    \Ep{s\sim d^{\pi'},a\sim\pi'(\cdot\mid s)}{a_\pi(s,a)}=\sum_{t=0}^\infty \gamma^t\Ep{\pi'}{a_\pi(s_t,a_t)},
+    \Ep{s\sim d^{\pi'},a\sim\pi'(\cdot\mid s)}{A_\pi(s,a)}=\sum_{t=0}^\infty \gamma^t\Ep{\pi'}{A_\pi(s_t,a_t)},
   }
   concluding the proof. 
 
@@ -535,17 +535,17 @@
 
   \textbf{Importance-Weighted Policy Gradients}: Policy optimization reduces to 
   \BE{
-    \max_{\pi'} J(\pi')=\max_{\pi'} J(\pi')-J(\pi)=\max_{\pi'} \mathbf{E}_{s\sim d^{\pi'}}\Ep{a\sim\pi'(\cdot\mid s)}{a_\pi(s,a)}
+    \max_{\pi'} J(\pi')=\max_{\pi'} J(\pi')-J(\pi)=\max_{\pi'} \Eb_{s\sim d^{\pi'}}\Ep{a\sim\pi'(\cdot\mid s)}{A_\pi(s,a)}
   }
   We approximate $d^\pi(s)\approx d^{\pi'}(s)$ so that we can sample states from the existing policy $\pi$ and apply the distribution shift correction from $\pi'(\cdot\mid s)$ to $\pi(\cdot\mid s)$:
   \BE{
-    \mathbf{E}_{s\sim d^{\pi'}}\Ep{a\sim\pi'(\cdot\mid s)}{a_\pi(s,a)}
-    =\mathbf{E}_{s\sim d^{\pi'}}\Ep{a\sim\pi(\cdot\mid s)}{\f{\pi'(a\mid s)}{\pi(a\mid s)}{a_\pi(s,a)}} 
-    \approx\mathbf{E}_{s\sim d^{\pi}}\Ep{a\sim\pi(\cdot\mid s)}{\f{\pi'(a\mid s)}{\pi(a\mid s)}{a_\pi(s,a)}} 
+    \Eb_{s\sim d^{\pi'}}\Ep{a\sim\pi'(\cdot\mid s)}{A_\pi(s,a)}
+    =\Eb_{s\sim d^{\pi'}}\Ep{a\sim\pi(\cdot\mid s)}{\f{\pi'(a\mid s)}{\pi(a\mid s)}{A_\pi(s,a)}}
+    \approx\Eb_{s\sim d^{\pi}}\Ep{a\sim\pi(\cdot\mid s)}{\f{\pi'(a\mid s)}{\pi(a\mid s)}{A_\pi(s,a)}} 
   }
   We have that
   \BE{
-    \nabla_{\theta'}\mathbf{E}_{s\sim d^{\pi}}\Ep{a\sim\pi(\cdot\mid s)}{\f{\pi'(a\mid s)}{\pi(a\mid s)}{a_\pi(s,a)}}=\mathbf{E}_{s\sim d^{\pi}}\Ep{a\sim\pi(\cdot\mid s)}{\nabla_{\theta'}\log \pi'(a\mid s)\f{\pi'(a\mid s)}{\pi(a\mid s)}{a_\pi(s,a)}}
+    \nabla_{\theta'}\Eb_{s\sim d^{\pi}}\Ep{a\sim\pi(\cdot\mid s)}{\f{\pi'(a\mid s)}{\pi(a\mid s)}{A_\pi(s,a)}}=\Eb_{s\sim d^{\pi}}\Ep{a\sim\pi(\cdot\mid s)}{\nabla_{\theta'}\log \pi'(a\mid s)\f{\pi'(a\mid s)}{\pi(a\mid s)}{A_\pi(s,a)}}
   }
   (recall that $\nabla_\theta \log\pi(a\mid s)$ has a closed-form solution for Gaussian and softmax policies). To account for the approximation, we add a penalty term to the loss to make it a \textbf{constrained maximization} problem:
   \BE{
@@ -554,13 +554,13 @@
 
   \hl{\textbf{Proximity Policy Optimization (PPO)}}: Gradient is ``clipped'' (reduced to 0) if $\pi'(a\mid s)$ diverges from $\pi(a\mid s)$. 
   \BE{
-    \max_{\pi'} \mathbf{E}_{s\sim d^\pi(\cdot)} \mathbf{E}_{a\sim \pi(\cdot\mid s)} \mathrm{clip}\bpa{\f{\pi'(a\mid s)}{\pi(a\mid s)}, 1-\epsilon_-, 1+\epsilon_+}a_\pi(s,a)
+    \max_{\pi'} \Eb_{s\sim d^\pi(\cdot)} \Eb_{a\sim \pi(\cdot\mid s)} \mathrm{clip}\bpa{\f{\pi'(a\mid s)}{\pi(a\mid s)}, 1-\epsilon_-, 1+\epsilon_+}A_\pi(s,a)
   }
-  For example, if $a_\pi>0$, then $\pi'(a\mid s)>\pi(a\mid s)$. Applying this update iteratively will clip it to $1+\epsilon$. Alternatively,
+  For example, if $A_\pi>0$, then $\pi'(a\mid s)>\pi(a\mid s)$. Applying this update iteratively will clip it to $1+\epsilon$. Alternatively,
   \BE{
-    \max_{\pi'} \mathbf{E}_{s\sim d^\pi(\cdot)} \mathbf{E}_{a\sim \pi(\cdot\mid s)} \min\bbr{\f{\pi'(a\mid s)}{\pi(a\mid s)}a_\pi(s,a), \mathrm{clip}\bpa{\f{\pi'(a\mid s)}{\pi(a\mid s)}, 1-\epsilon_-, 1+\epsilon_+}a_\pi(s,a)}
+    \max_{\pi'} \Eb_{s\sim d^\pi(\cdot)} \Eb_{a\sim \pi(\cdot\mid s)} \min\bbr{\f{\pi'(a\mid s)}{\pi(a\mid s)}A_\pi(s,a), \mathrm{clip}\bpa{\f{\pi'(a\mid s)}{\pi(a\mid s)}, 1-\epsilon_-, 1+\epsilon_+}A_\pi(s,a)}
   }
-  addresses the problem of if $a_\pi>0$ but $\f{\pi'(a\mid s)}{\pi(a\mid s)}<1-\varepsilon_-$.
+  addresses the problem of if $A_\pi>0$ but $\f{\pi'(a\mid s)}{\pi(a\mid s)}<1-\varepsilon_-$.
   \BI{
   \item Typically, $\varepsilon_+>\varepsilon_-$ to encourage exploration by emphasizing good actions.
   }
@@ -569,7 +569,7 @@
   
   \textbf{Natural Gradient Decent}: A form of gradient decent that considers divergence in distribution space, instead of Euclidean distance in parametr space:
   \BA{
-    \text{gradient decent:}& d^*=\argmax_{\bnm{d}_2<\epsilon}  U(\theta+d) 
+    \text{gradient decent:}& d^*=\argmax_{\bnm{d}_2<\epsilon}  U(\theta+d) \\
     \text{natural gradient decent:}& d^*=\argmax_{\calD_\text{KL}(\pi_\theta\Vert \pi_{\theta+d})<\epsilon}  U(\theta+d)
   }
   where $\calD_\text{KL}$ is the Knullback-Leibler divergence defined by 
@@ -579,49 +579,49 @@
 
   \textbf{KL-Constrained Objective / Derivation of TRPO}: 
   \BA{
-    &\max_\theta \overline{\bbA}_{\pi_\text{old}}(\pi)=\sum_{t=1}^T \mathbf{E}_{s_t\sim P_{\theta_\text{old}}(\cdot)} \mathbf{E}_{a_t\sim \pi_{\theta_\text{old}}(\cdot\mid s_t)} \f{\pi_\theta(a_t\mid s_t)}{\pi_{\theta_\text{old}}(a_t\mid s_t)}a_{\pi_{\theta_\text{old}}}(s_t,a_t)\quad \text{such that} 
+    &\max_\theta \overline{\bbA}_{\pi_\text{old}}(\pi)=\sum_{t=1}^T \Eb_{s_t\sim P_{\theta_\text{old}}(\cdot)} \Eb_{a_t\sim \pi_{\theta_\text{old}}(\cdot\mid s_t)} \f{\pi_\theta(a_t\mid s_t)}{\pi_{\theta_\text{old}}(a_t\mid s_t)}A_{\pi_{\theta_\text{old}}}(s_t,a_t)\quad \text{such that} \\
     &\Ep{t}{\calD_\text{KL}\bpa{\pi_{\theta_\text{old}}(\cdot\mid s_t)\Vert \pi_\theta(\cdot\Vert s_t)}}\leq \delta
   }
   For the unconstrained objective:
   \BA{
     \nabla_\theta \bar{\bbA}_{\pi_{\text{old}}}(\pi)\vert_{\theta=\theta_{\text{old}}}
-    &=\sum_{t=1}^{T} \mathbf{E}_{s_t \sim p_{\theta_{\text{old}}}(s_t)}{\Ep{a_t \sim \pi_{\theta_{\text{old}}}(a_t \mid s_t)}{\nabla_\theta \log \pi_\theta(a_t \mid s_t)\vert_{\theta=\theta_{\text{old}}}a_{\pi_{\theta_{\text{old}}}}(s_t,a_t)}} 
+    &=\sum_{t=1}^{T} \Eb_{s_t \sim p_{\theta_{\text{old}}}(s_t)}{\Ep{a_t \sim \pi_{\theta_{\text{old}}}(a_t \mid s_t)}{\nabla_\theta \log \pi_\theta(a_t \mid s_t)\vert_{\theta=\theta_{\text{old}}}A_{\pi_{\theta_{\text{old}}}}(s_t,a_t)}} \\
     \nabla_\theta \bar{\bbA}_{\pi_{\text{old}}}(\pi)\vert_{\theta=\theta'}
-    &=\sum_{t=1}^{T}\mathbf{E}_{s_t \sim p_{\theta_{\text{old}}}(s_t)}{\Ep{a_t \sim \pi_{\theta_{\text{old}}}(a_t \mid s_t)}{\frac{\pi_{\theta'}(a_t \mid s_t)}{\pi_{\theta_{\text{old}}}(a_t \mid s_t)}\nabla_\theta \log \pi_\theta(a_t \mid s_t)\vert_{\theta=\theta'}a_{\pi_{\theta_{\text{old}}}}(s_t,a_t)}}
+    &=\sum_{t=1}^{T}\Eb_{s_t \sim p_{\theta_{\text{old}}}(s_t)}{\Ep{a_t \sim \pi_{\theta_{\text{old}}}(a_t \mid s_t)}{\frac{\pi_{\theta'}(a_t \mid s_t)}{\pi_{\theta_{\text{old}}}(a_t \mid s_t)}\nabla_\theta \log \pi_\theta(a_t \mid s_t)\vert_{\theta=\theta'}A_{\pi_{\theta_{\text{old}}}}(s_t,a_t)}}
   }
 
   Consider the unconstrained penalized objective:
   \BA{
     d^*
-    &=\argmax_d U(\theta+d)-\lambda\calD_\text{KL}(\pi_\theta\Vert\pi_{\theta+d}-\delta) 
-    &\approx \argmax_d U(\theta_\text{old})+\nabla_\theta U(\theta)\vert_{\theta=\theta_\text{old}}
+    &=\argmax_d U(\theta+d)-\lambda\calD_\text{KL}(\pi_\theta\Vert\pi_{\theta+d}-\delta) \\
+    &\approx \argmax_d U(\theta_\text{old})+\nabla_\theta U(\theta)\vert_{\theta=\theta_\text{old}} \\
     &\quad\quad-\lambda\bbb{\calD_\text{KL}(\pi_{\theta_\text{old}}\Vert \pi_{\theta_\text{old}})+d^\top\nabla_\theta \calD_\text{KL}(\pi_{\theta_\text{old}}\Vert \pi_\theta)\vert_{\theta=\theta_\text{old}}+\f{1}{2}\lambda\bpa{d^\top\nabla_\theta^2\calD_\text{KL}(\pi_{\theta_\text{old}}\Vert\pi_\theta)\vert_{\theta=\theta_\text{old}}d}} + \lambda \delta
   }
   using the first-order Taylor expansion for the objective and second-order Tayler expansion for the KL. Clearly, $\calD_\text{KL}(\pi_{\theta_\text{old}}\Vert \pi_{\theta_\text{old}})=0$ and $d^\top\nabla_\theta \calD_\text{KL}(\pi_{\theta_\text{old}}\Vert \pi_\theta)\vert_{\theta=\theta_\text{old}}=0$ because the KL-divergence achieves a global minimum at $\pi_{\theta}=\pi_{\theta_\text{old}}$. We have that
   \BA{
     \nabla_\theta^2\calD_\text{KL}(\pi_{\theta_\text{old}}\Vert\pi_\theta)\vert_{\theta=\theta_\text{old}}
-    &=-\mathbf{E}_{x\sim P_{\theta_\text{old}}} \nabla^2_\theta \log P_\theta(x)\vert_{\theta=\theta_\text{old}} 
-    &=-\mathbf{E}_{x\sim P_{\theta_\text{old}}} \nabla_\theta \bpa{\f{\nabla_\theta P_\theta(x)}{P_\theta(x)}}\vert_{\theta=\theta_\text{old}} 
-    &=-\mathbf{E}_{x\sim P_{\theta_\text{old}}} \bpa{\f{\nabla_\theta^2 P_\theta(x)P_\theta(x)-\nabla_\theta P_\theta(x)\nabla_\theta P_\theta(x)^\top}{P_\theta(x)^2}}\vert_{\theta=\theta_\text{old}} 
-    &=-\mathbf{E}_{x\sim P_{\theta_\text{old}}} \f{\nabla^2_\theta P_\theta(x)\vert_{\theta=\theta_\text{old}}}{{P_{\theta_\text{old}}}(x)}+\mathbf{E}_{x\sim P_{\theta_\text{old}}} \nabla_\theta \log P_\theta(x)\nabla_\theta \log P_\theta(x)^\top \vert_{\theta=\theta_\text{old}} 
-    &=\underbrace{\mathbf{E}_{x\sim P_{\theta_\text{old}}} \nabla_\theta \log  P_\theta(x)\vert_{\theta=\theta_\text{old}}\nabla_\theta \log P_\theta(x) \vert_{\theta=\theta_\text{old}}^\top}_{\textbf{F}(\theta): \text{Fisher information matrix}} 
+    &=-\Eb_{x\sim P_{\theta_\text{old}}} \nabla^2_\theta \log P_\theta(x)\vert_{\theta=\theta_\text{old}} \\
+    &=-\Eb_{x\sim P_{\theta_\text{old}}} \nabla_\theta \bpa{\f{\nabla_\theta P_\theta(x)}{P_\theta(x)}}\vert_{\theta=\theta_\text{old}} \\
+    &=-\Eb_{x\sim P_{\theta_\text{old}}} \bpa{\f{\nabla_\theta^2 P_\theta(x)P_\theta(x)-\nabla_\theta P_\theta(x)\nabla_\theta P_\theta(x)^\top}{P_\theta(x)^2}}\vert_{\theta=\theta_\text{old}} \\
+    &=-\Eb_{x\sim P_{\theta_\text{old}}} \f{\nabla^2_\theta P_\theta(x)\vert_{\theta=\theta_\text{old}}}{{P_{\theta_\text{old}}}(x)}+\Eb_{x\sim P_{\theta_\text{old}}} \nabla_\theta \log P_\theta(x)\nabla_\theta \log P_\theta(x)^\top \vert_{\theta=\theta_\text{old}} \\
+    &=\underbrace{\Eb_{x\sim P_{\theta_\text{old}}} \nabla_\theta \log  P_\theta(x)\vert_{\theta=\theta_\text{old}}\nabla_\theta \log P_\theta(x) \vert_{\theta=\theta_\text{old}}^\top}_{\textbf{F}(\theta): \text{Fisher information matrix}} \\
     &\approx \f{1}{N} \sum_{i=1,x^{(i)}\sim p_{\theta_\text{old}}}^N \bbb{\nabla_\theta \log  P_\theta(x)\vert_{\theta=\theta_\text{old}}\nabla_\theta \log P_\theta(x) \vert_{\theta=\theta_\text{old}}}
   }
   Thus the gradient approximation reduces to
   \BA{
     d^*
-    &\approx \argmax_d \nabla_\theta U(\theta)\vert_{\theta=\theta_\text{old}}\cdot d-\f{1}{2}\lambda d^\top \mathbf{F}(\theta)d 
+    &\approx \argmax_d \nabla_\theta U(\theta)\vert_{\theta=\theta_\text{old}}\cdot d-\f{1}{2}\lambda d^\top \mathbf{F}(\theta)d \\
     &=\argmin_d -\nabla_\theta U(\theta)\vert_{\theta=\theta_\text{old}}\cdot d+\f{1}{2}\lambda d^\top \mathbf{F}(\theta)d.
   }
   Setting the gradient to $0$ gives
   \BA{
     0
-    &=\ppx{x}\bpa{-\nabla_\theta U(\theta)\vert_{\theta=\theta_\text{old}}\cdot d+\f{1}{2}\lambda d^\top \mathbf{F}(\theta)d} 
-    &=-\nabla_\theta U(\theta)\vert_{\theta=\theta_\text{old}}+\f{1}{2}\lambda d^\top \mathbf{F}(\theta) 
+    &=\ppx{x}\bpa{-\nabla_\theta U(\theta)\vert_{\theta=\theta_\text{old}}\cdot d+\f{1}{2}\lambda d^\top \mathbf{F}(\theta)d} \\
+    &=-\nabla_\theta U(\theta)\vert_{\theta=\theta_\text{old}}+\f{1}{2}\lambda d^\top \mathbf{F}(\theta) \\
     d
     &=\f{2}{\lambda} \mathbf{F}^{-1}(\theta_\text{old})\nabla_\theta U(\theta)\vert_{\theta=\theta_\text{old}}
   }
-  Because $2/\lambda$ is a constant, the gradient update is simply $g_N=\mathbf{F}^{-1}(\theta_\text{old})\nabla_\theta U(\theta)\vert_{\theta=\theta_\text{old}}$ where the second term is the policy gradient $\nabla \theta \log \pi_\theta(a\mid s)a_\pi(a\mid s)$:
+  Because $2/\lambda$ is a constant, the gradient update is simply $g_N=\mathbf{F}^{-1}(\theta_\text{old})\nabla_\theta U(\theta)\vert_{\theta=\theta_\text{old}}$ where the second term is the policy gradient $\nabla_\theta \log \pi_\theta(a\mid s)A_\pi(s,a)$:
   \BE{
     \theta_\text{new}\leftarrow \theta_\text{old}+\alpha\cdot g_N
   }
@@ -640,15 +640,15 @@
 
   \textbf{Estimation of Q-functions Off-Policy}: The action-value function can be estimated from any policy:
   \BE{
-    q_\pi(s,a)=r(s,a)+\gamma\mathbf{E}_{s'\sim P(\cdot\mid s,a)} \mathbf{E}_{a'\sim\pi(\cdot\mid s')} q_\pi(s',a')
+    q_\pi(s,a)=r(s,a)+\gamma\Eb_{s'\sim P(\cdot\mid s,a)} \Eb_{a'\sim\pi(\cdot\mid s')} q_\pi(s',a')
   }
   where the TD estimation loss of $q_\pi$ is given by
   \BE{
-    \calL(\phi)=\Ep{(s,a,r,s')\sim\text{Replay-Buffer}}{\bpa{q^\phi(s,a)-y(s,a)}^2}
+    \calL(\phi)=\Ep{(s,a,r,s')\sim\text{Replay-Buffer}}{\bpa{Q_\phi(s,a)-y(s,a)}^2}
   }
   with target
   \BE{
-    y(s,a)=r(s,a)+\gamma\mathbf{E}_{s'\sim P(\cdot\mid s,a)} \mathbf{E}_{a'\sim\pi(\cdot\mid s')}q^\phi_\text{tgt}(s',a').
+    y(s,a)=r(s,a)+\gamma\Eb_{s'\sim P(\cdot\mid s,a)} \Eb_{a'\sim\pi(\cdot\mid s')}Q_{\phi,\text{tgt}}(s',a').
   }
   The target network can be updated with
   \BI{
@@ -658,11 +658,11 @@
 
   \textbf{Policy Objectives from Q-functions}: We can reframe the policy objective
   \BE{
-    \max_\theta J(\theta)=\max_\theta \Ep{\tau\sim P_\theta(\cdot)}{\sum_{t=1}^T q^\phi(s_t,a_t)}
+    \max_\theta J(\theta)=\max_\theta \Ep{\tau\sim P_\theta(\cdot)}{\sum_{t=1}^T Q_\phi(s_t,a_t)}
   }
-  where $\theta$ paramerizes the policy $\pi_\theta$ and $q^\phi$ is the estimated action-value function. If the actor is deterministic (action $a=\mu_\theta(s)$), then
+  where $\theta$ paramerizes the policy $\pi_\theta$ and $Q_\phi$ is the estimated action-value function. If the actor is deterministic (action $a=\mu_\theta(s)$), then
   \BE{
-    \mathbf{E} \sum_{t=0}^T \ddx{\theta} q^\phi(s_t,a_t)=\mathbf{E}\sum_{t=0}^T \pypx{q^\phi(s_t,a)}{a}\vert_{a=a_t}\pypx{a_t}{\theta}
+    \Eb \sum_{t=0}^T \ddx{\theta} Q_\phi(s_t,a_t)=\Eb\sum_{t=0}^T \pypx{Q_\phi(s_t,a)}{a}\vert_{a=a_t}\pypx{a_t}{\theta}
   }
 
   \textbf{Computing Gradients of Expectations}: If the differentiated variable appears in the expectation, then
@@ -680,13 +680,13 @@
 
   \hl{\textbf{Deep Deterministic Policy Gradients (DDPG) Actor-Critic}}: DDPG target:
   \BA{
-    a'_{t+1}&\leftarrow \pi_\theta(s_{t+1}) 
-    y_t^\text{DDPG}&\leftarrow r+ \gamma q^{\overline{\phi}}(s_{t+1},a'_{t+1})
+    a'_{t+1}&\leftarrow \pi_\theta(s_{t+1}) \\
+    y_t^\text{DDPG}&\leftarrow r+ \gamma Q_{\overline{\phi}}(s_{t+1},a'_{t+1})
   }
   \BN{
   \item Sample $\tau_i=\bbr{s_t^{(i)},a_t^{(i)}}_{t=1}^T$ by deploying policy $\pi_\theta$ with some exploration noise. Add these to a replay buffer.
   \item Update value function by regressing to targets $y_t^\text{DDPG}$ (similar to TD(0))
-  \item Update policy $\theta\leftarrow \theta+\alpha\nabla_a q^\phi(s,a)\vert_{a=\pi_\theta(s)}\nabla_\theta \pi_\theta(s)$
+  \item Update policy $\theta\leftarrow \theta+\alpha\nabla_a Q_\phi(s,a)\vert_{a=\pi_\theta(s)}\nabla_\theta \pi_\theta(s)$
   \item Update the parameters $\overline{\theta}\leftarrow \tau\theta+(1-\tau)\overline{\theta}$ and $\overline{\phi}\leftarrow \tau\phi+(1-\tau)\overline{\phi}$
   }
   \BI{
@@ -695,14 +695,14 @@
 
   \textbf{Reparameterized Policy Gradients}: For Gaussian policies where $\theta$ parameterizes $a\sim\calN(\mu_\theta(s),\sigma^2_\theta(s))$ we can reparameterize them as $a=\mu_\theta(s)+\sigma_\theta(s)\odot z$ for $z\sim\calN(0,1)$: 
   \BE{
-    \mathbf{E} \sum_{t=0}^T \ddx{\theta} q^\phi(s_t,a_t)=\mathbf{E}\sum_{t=0}^T \pypx{q^\phi(s_t,a)}{a}\vert_{a=a_t}\pypx{a_t}{\theta}=\mathbf{E}\sum_{t=0}^T \pypx{q^\phi(s_t,a)}{a}\vert_{a=a_t}\bpa{\dydx{\mu_\theta(s_t)}{\theta}+z_t\dydx{\sigma_\theta(s_t)}{\theta}}
+    \Eb \sum_{t=0}^T \ddx{\theta} Q_\phi(s_t,a_t)=\Eb\sum_{t=0}^T \pypx{Q_\phi(s_t,a)}{a}\vert_{a=a_t}\pypx{a_t}{\theta}=\Eb\sum_{t=0}^T \pypx{Q_\phi(s_t,a)}{a}\vert_{a=a_t}\bpa{\dydx{\mu_\theta(s_t)}{\theta}+z_t\dydx{\sigma_\theta(s_t)}{\theta}}
   }
 
   \hl{\textbf{Twin Delayed DDPG (TD3)}}: Uses clipped double Q-learning with target policy smoothing and delayed policy updates. The TD3 critic target is
   \BA{
-    a'_{t+1}&\leftarrow \pi_{\overline{\theta}}(s_{t+1})+\epsilon 
-    y_t^{\text{TD3}}&\leftarrow r_t+\gamma\min_{i\in\{1,2\}} q^{\overline{\phi}_i}(s_{t+1},a'_{t+1}) 
-    \phi_i&\leftarrow \phi_i-\alpha\nabla_{\phi_i} \Ep{\calD}{\bpa{q^{\phi_i}(s_t,a_t)-y_t^{\text{TD3}}}^2}
+    a'_{t+1}&\leftarrow \pi_{\overline{\theta}}(s_{t+1})+\epsilon \\
+    y_t^{\text{TD3}}&\leftarrow r_t+\gamma\min_{i\in\{1,2\}} Q_{\overline{\phi}_i}(s_{t+1},a'_{t+1}) \\
+    \phi_i&\leftarrow \phi_i-\alpha\nabla_{\phi_i} \Ep{\calD}{\bpa{Q_{\phi_i}(s_t,a_t)-y_t^{\text{TD3}}}^2}
   }
   where $\epsilon\sim\text{clipped }\calN(0,\sigma^2)$ is a noise vector. Delayed policy updates means that the actor network is updated less frequently than the critic network (1:2 ratio). The Q-functions are also allowed to converge for a fixed policy to allow for more stable targets.
 
@@ -713,8 +713,8 @@
   \textbf{Maximum Entropy RL Objective}: To promote stochastic policies, we can add an entropy term:
   \BA{
     \pi^*
-    &=\argmax_\pi \Ep{\tau\sim\pi}{\sum_{t=1}^T \gamma^tr(s_t,a_t)+\alpha \calH(\pi(\cdot\mid s_t))} 
-    &=\argmax_\pi \Ep{\tau\sim\pi}{\sum_{t=1}^T \gamma^tr(s_t,a_t)+\alpha \Ep{a\sim\pi(\cdot\mid s)}{-\log \pi(a\mid s_t))}} 
+    &=\argmax_\pi \Ep{\tau\sim\pi}{\sum_{t=1}^T \gamma^tr(s_t,a_t)+\alpha \calH(\pi(\cdot\mid s_t))} \\
+    &=\argmax_\pi \Ep{\tau\sim\pi}{\sum_{t=1}^T \gamma^tr(s_t,a_t)+\alpha \Ep{a\sim\pi(\cdot\mid s)}{-\log \pi(a\mid s_t))}} \\
     &=\argmax_\pi \Ep{\tau\sim\pi}{\sum_{t=1}^T \gamma^tr(s_t,a_t)-\alpha \log\pi(a_t\mid s_t)}
   }
   \BI{
@@ -731,7 +731,7 @@
   }
   This gives
   \BE{
-    q_\pi^\text{soft}(s,a)=r(s,a)+\sum_{s'} T(s'\mid s,a)\sum_{a'} \bpa{q_\pi^\text{soft}(s',a')-\alpha\log \pi(a'\mid s')}.
+    q_\pi^\text{soft}(s,a)=r(s,a)+\sum_{s'} P(s'\mid s,a)\sum_{a'} \bpa{q_\pi^\text{soft}(s',a')-\alpha\log \pi(a'\mid s')}.
   }
 
   \hl{\textbf{Soft Policy Iteration}}: An algorithm similar to policy-gradient iteration for soft policies. The \textbf{soft policy evaluation step} updates
@@ -744,7 +744,7 @@
   }
   or equivalently,
   \BE{
-    \phi^*=\argmax_\phi \Ep{s,a\sim\pi_\phi(\cdot\mid s)}{q_\theta(s,a)-\alpha\log\pi_\phi(a\mid s)}
+    \phi^*=\argmax_\phi \Ep{s,a\sim\pi_\phi(\cdot\mid s)}{Q_\theta(s,a)-\alpha\log\pi_\phi(a\mid s)}
   }
 
   \hl{\textbf{Soft Actor Critic (SAC)}}: Combines soft policy-improvement with ideas from DDPG and TD3. Uses double Q-learning and a replay buffer, with entropy regularization in both the actor and critic losses.
@@ -787,7 +787,7 @@
 
   \hl{\textbf{Generative Adversarial Reinforcement Learning (GAIL)}}: Using a conditional GAN to generate actions conditioned on states. This learning paradigm requires an environment.
   \BA{
-    \text{generator objective}&: \Ep{(s,a)\sim\pi_\theta}{-\log D_\phi(s,a)} 
+    \text{generator objective}&: \Ep{(s,a)\sim\pi_\theta}{-\log D_\phi(s,a)} \\
     \text{discriminator objective}&: \Ep{(s,a)\sim\text{demo}}{\log(1-D_\phi(s,a))}+\Ep{(s,a)\sim\pi_\theta}{\log D_\phi(s,a)}
   }
   \BI{
@@ -799,9 +799,9 @@
   }
 
 
-  \textbf{Goal Conditioning}: Condition rewards based on goal: $v_\theta(s)$ becomes $v_\theta(s,g)$. The learning objective for BC becomes
+  \textbf{Goal Conditioning}: Condition rewards based on goal: $V_\theta(s)$ becomes $V_\theta(s,g)$. The learning objective for BC becomes
   \BE{
-    J_\text{BC}(\theta,\tau)=\mathbf{E}_{(s_t^j,a_t^j,g^j)\sim\tau} \bnm{a_t^j-\pi_\theta(s_t^j,g^j)}_2^2.
+    J_\text{BC}(\theta,\tau)=\Eb_{(s_t^j,a_t^j,g^j)\sim\tau} \bnm{a_t^j-\pi_\theta(s_t^j,g^j)}_2^2.
   }
 
   \hl{\textbf{Goal Relabelling}}: Data augmentation for goal-conditioned reinforcement learning. For a data point of the form $(s_t^j,a_t^j,r_{t+1}^j,s_{t+1}^j,g^j)$ ($j$ is the trajectory label), we can relabel it $(s_t^j,a_t^j,r_{t+1}^j,s_{t+1}^j,g'=s^j_{t+k})$ (or some other way of sampling the goal).
@@ -826,13 +826,13 @@
   \hl{\textbf{Evidence Lower-Bound (ELBO)}}: Consider a stochastic generative model that learns another parameterized distribution $q_\phi(z\mid x)$. Then,
   \BA{
     \log p(\vbx)
-    &=\log p(\vbx)\int q_\phi(\vbz\mid \vbx)\d \vbz 
-    &=\int q_\phi(\vbz\mid \vbx)\log p(\vbx)\d \vbz 
-    &=\Ep{q_\phi(\vbz\mid\vbx)}{\log p(\vbx)} 
-    &=\Ep{q_\phi(\vbz\mid\vbx)}{\log \f{p(\vbx,\vbz)}{q_\phi(\vbz\mid \vbx)})}+\Ep{q_\phi(\vbz\mid\vbx)}{\log \f{q_\phi(\vbz\mid \vbx)}{p(\vbz\mid \vbx)})} 
-    &=\Ep{q_\phi(\vbz\mid\vbx)}{\log \f{p(\vbx,\vbz)}{q_\phi(\vbz\mid \vbx)})}+\calD_\text{KL}(q_\phi(\vbz\mid\vbx)\Vert p(\vbz)) 
-    &\geq \Ep{q_\phi(\vbz\mid\vbx)}{\log \f{p(\vbx,\vbz)}{q_\phi(\vbz\mid \vbx)})} 
-    &= \Ep{q_\phi(\vbz\mid\vbx)}{\log p(\vbx\mid\vbz)}+\Ep{q_\phi(\vbz\mid\vbx)}{\log \f{p(\vbz)}{q_\phi(\vbz\mid \vbx)})} 
+    &=\log p(\vbx)\int q_\phi(\vbz\mid \vbx)\d \vbz \\
+    &=\int q_\phi(\vbz\mid \vbx)\log p(\vbx)\d \vbz \\
+    &=\Ep{q_\phi(\vbz\mid\vbx)}{\log p(\vbx)} \\
+    &=\Ep{q_\phi(\vbz\mid\vbx)}{\log \f{p(\vbx,\vbz)}{q_\phi(\vbz\mid \vbx)})}+\Ep{q_\phi(\vbz\mid\vbx)}{\log \f{q_\phi(\vbz\mid \vbx)}{p(\vbz\mid \vbx)})} \\
+    &=\Ep{q_\phi(\vbz\mid\vbx)}{\log \f{p(\vbx,\vbz)}{q_\phi(\vbz\mid \vbx)})}+\calD_\text{KL}(q_\phi(\vbz\mid\vbx)\Vert p(\vbz)) \\
+    &\geq \Ep{q_\phi(\vbz\mid\vbx)}{\log \f{p(\vbx,\vbz)}{q_\phi(\vbz\mid \vbx)})} \\
+    &= \Ep{q_\phi(\vbz\mid\vbx)}{\log p(\vbx\mid\vbz)}+\Ep{q_\phi(\vbz\mid\vbx)}{\log \f{p(\vbz)}{q_\phi(\vbz\mid \vbx)})} \\
     &=\underbrace{\Ep{q_\phi(\vbz\mid\vbx)}{\log p(\vbx\mid\vbz)}}_\text{reconstruction term} + \underbrace{\calD_\text{KL}(q_\phi(\vbz\mid\vbx\Vert p(\vbz)))}_\text{prior matching term}.
   }
   \BI{
@@ -886,14 +886,14 @@
   \textbf{ELBO for MHVAEs}:
   \BA{
     \log p(\vbx_0)
-    &=\log\int p_\theta(\vbx_{0:T})\d\vbx_{1:T} 
-    &=\log \Ep{q_\phi(\vbx_{1:T}\mid \vbx_0)}{\f{p_\theta(\vbx_{0:T})}{q_\phi(\vbx_{1:T}\mid \vbz)}} 
+    &=\log\int p_\theta(\vbx_{0:T})\d\vbx_{1:T} \\
+    &=\log \Ep{q_\phi(\vbx_{1:T}\mid \vbx_0)}{\f{p_\theta(\vbx_{0:T})}{q_\phi(\vbx_{1:T}\mid \vbz)}} \\
     &\geq \Ep{q_\phi(\vbx_{1:T}\mid \vbx_0)}{\log\f{p_\theta(\vbx_{0:T})}{q_\phi(\vbx_{1:T}\mid \vbz)}}
   }
 
   \hl{\textbf{Diffusion Models}}: A generative model that allows for greater expressivity for generating conditional distributions (Figure \ref{fig:diffusion-comparison}). Diffusion Models are MHVAE where the latent dimension is equal to the data dimension, and encoder is fixed by hyperparameters s.t. the $x_T\sim\calN(0,1)$. Specifically,
   \BA{
-    q(\vbx_t\mid \vbx_{t-1})&=\calN(x_t;\sqrt{\alpha_t}\vbx_{t-1},(1-\alpha_t)I) 
+    q(\vbx_t\mid \vbx_{t-1})&=\calN(x_t;\sqrt{\alpha_t}\vbx_{t-1},(1-\alpha_t)I) \\
     p_\theta(\vbx_{t-1}\mid \vbx_t)&=\calN(\vbx_{t-1};\mu_\theta(x_t,t),\sigma_t^2I).
   }
   Note that $\mu_\theta$ now takes in the step $t$ as an input.
@@ -915,19 +915,19 @@
   \textbf{ELBO for Diffusion Models}: 
   \BA{
     \log p(\vbx)
-    &=\log \int p(\vbx_{0:T})\d \vbx_{1:T} 
-    &=\log \int\f{p(\vbx_{0:T})q(\vbx_{1:T}\mid \vbx_0)}{q(\vbx_{1:T}\mid \vbx_0)}\d \vbx_{1:T} 
-    &=\log \Eb_{q(\vbx_{1:T}\mid \vbx_0)}\f{p(\vbx_{0:T})}{q(\vbx_{1:T}\mid \vbx_0)} 
-    &\geq\Eb_{q(\vbx_{1:T}\mid \vbx_0)}\log\f{p(\vbx_{0:T})}{q(\vbx_{1:T}\mid \vbx_0)} 
-    &=\Eb_{q(\vbx_{1:T}\mid \vbx_0)}\log\f{p(\vbx_T)\prod_{t=1}^T p_\theta(\vbx_{t-1}\mid \vbx_t)}{\prod_{t=1}^T q(\vbx_t\mid \vbx_{t-1})} 
-    &=\Eb_{q(\vbx_{1:T}\mid \vbx_0)}\log \f{p(\vbx_T)p_\theta(\vbx_0\mid \vbx_1)\prod_{t=1}^{T-1} p_\theta(\vbx_{t}\mid \vbx_{t+1})}{q(\vbx_T\mid \vbx_{T-1})\prod_{t=1}^{T-1} q(\vbx_t\mid \vbx_{t-1})} 
-    &=\Ep{q(\vbx_{1:T}\mid \vbx_0)}{\log \f{p(\vbx_T)p_\theta(\vbx_0\mid \vbx_1)}{q(\vbx_T\mid \vbx_{T-1})}}+\Ep{q(\vbx_{1:T}\mid \vbx_0)}{\log \prod_{t=1}^{T-1}\f{p_\theta(\vbx_t\mid \vbx_{t+1})}{q(\vbx_t\mid \vbx_{t-1})}} 
-    &=\Ep{q(\vbx_{1:T}\mid \vbx_0)}{\log p_\theta(\vbx_0\mid \vbx_1)}+\Ep{q(\vbx_{1:T}\mid \vbx_0)}{\log \f{p(\vbx_T)}{q(\vbx_T\mid \vbx_{T-1})}}+\sum_{t=1}^{T-1} \Eb_{q(\vbx_{1:T}\mid \vbx_0)}\log \f{p_\theta(\vbx_t\mid \vbx_{t+1})}{q(\vbx_t\mid \vbx_{t-1})} 
-    &=\Ep{q(\vbx_{1:T}\mid \vbx_0)}{\log p_\theta(\vbx_0\mid \vbx_1)}+\Ep{q(\vbx_{T-1},\vbx_{T}\mid \vbx_0)}{\log \f{p(\vbx_T)}{q(\vbx_T\mid \vbx_{T-1})}}+\sum_{t=1}^{T-1} \Eb_{q(\vbx_{t-1},\vbx_t,\vbx_{t+1}\mid \vbx_0)}\log \f{p_\theta(\vbx_t\mid \vbx_{t+1})}{q(\vbx_t\mid \vbx_{t-1})} 
+    &=\log \int p(\vbx_{0:T})\d \vbx_{1:T} \\
+    &=\log \int\f{p(\vbx_{0:T})q(\vbx_{1:T}\mid \vbx_0)}{q(\vbx_{1:T}\mid \vbx_0)}\d \vbx_{1:T} \\
+    &=\log \Eb_{q(\vbx_{1:T}\mid \vbx_0)}\f{p(\vbx_{0:T})}{q(\vbx_{1:T}\mid \vbx_0)} \\
+    &\geq\Eb_{q(\vbx_{1:T}\mid \vbx_0)}\log\f{p(\vbx_{0:T})}{q(\vbx_{1:T}\mid \vbx_0)} \\
+    &=\Eb_{q(\vbx_{1:T}\mid \vbx_0)}\log\f{p(\vbx_T)\prod_{t=1}^T p_\theta(\vbx_{t-1}\mid \vbx_t)}{\prod_{t=1}^T q(\vbx_t\mid \vbx_{t-1})} \\
+    &=\Eb_{q(\vbx_{1:T}\mid \vbx_0)}\log \f{p(\vbx_T)p_\theta(\vbx_0\mid \vbx_1)\prod_{t=1}^{T-1} p_\theta(\vbx_{t}\mid \vbx_{t+1})}{q(\vbx_T\mid \vbx_{T-1})\prod_{t=1}^{T-1} q(\vbx_t\mid \vbx_{t-1})} \\
+    &=\Ep{q(\vbx_{1:T}\mid \vbx_0)}{\log \f{p(\vbx_T)p_\theta(\vbx_0\mid \vbx_1)}{q(\vbx_T\mid \vbx_{T-1})}}+\Ep{q(\vbx_{1:T}\mid \vbx_0)}{\log \prod_{t=1}^{T-1}\f{p_\theta(\vbx_t\mid \vbx_{t+1})}{q(\vbx_t\mid \vbx_{t-1})}} \\
+    &=\Ep{q(\vbx_{1:T}\mid \vbx_0)}{\log p_\theta(\vbx_0\mid \vbx_1)}+\Ep{q(\vbx_{1:T}\mid \vbx_0)}{\log \f{p(\vbx_T)}{q(\vbx_T\mid \vbx_{T-1})}}+\sum_{t=1}^{T-1} \Eb_{q(\vbx_{1:T}\mid \vbx_0)}\log \f{p_\theta(\vbx_t\mid \vbx_{t+1})}{q(\vbx_t\mid \vbx_{t-1})} \\
+    &=\Ep{q(\vbx_{1:T}\mid \vbx_0)}{\log p_\theta(\vbx_0\mid \vbx_1)}+\Ep{q(\vbx_{T-1},\vbx_{T}\mid \vbx_0)}{\log \f{p(\vbx_T)}{q(\vbx_T\mid \vbx_{T-1})}}+\sum_{t=1}^{T-1} \Eb_{q(\vbx_{t-1},\vbx_t,\vbx_{t+1}\mid \vbx_0)}\log \f{p_\theta(\vbx_t\mid \vbx_{t+1})}{q(\vbx_t\mid \vbx_{t-1})} \\
     &=
     \underbrace{\Ep{q(\vbx_{1:T}\mid \vbx_0)}{\log p_\theta(\vbx_0\mid \vbx_1)}}_\text{reconstruction term}
-    -\underbrace{\Ep{q(\vbx_{T-1}\mid \vbx_0)}{\calD_\text{KL}(q_(\vbx_T\mid \vbx_{T-1})\Vert p(\vbx_T))}}_\text{prior matching term} 
-    &\quad-\underbrace{\sum_{t=1}^{T-1} \Eb_{q(\vbx_{t-1},\vbx_{t+1}\mid \vbx_0)}\calD_\text{KL}(q(\vbx_t\mid \vbx_{t-1})\Vert p_\theta(\vbx_t\mid \vbx_{t+1}))}_\text{consistency term} 
+    -\underbrace{\Ep{q(\vbx_{T-1}\mid \vbx_0)}{\calD_\text{KL}(q_(\vbx_T\mid \vbx_{T-1})\Vert p(\vbx_T))}}_\text{prior matching term} \\
+    &\quad-\underbrace{\sum_{t=1}^{T-1} \Eb_{q(\vbx_{t-1},\vbx_{t+1}\mid \vbx_0)}\calD_\text{KL}(q(\vbx_t\mid \vbx_{t-1})\Vert p_\theta(\vbx_t\mid \vbx_{t+1}))}_\text{consistency term}
   }
   \BI{
   \item The \textbf{reconstruction term} is the same as the ELBO for VAEs given the first step latent.
@@ -938,15 +938,15 @@
   \textbf{ELBO for Diffusion Models Form 1}: We have that
   \BA{
     q(\vbx_{t-1}\mid \vbx_t,\vbx_0)
-    &=\f{q(\vbx_t\mid \vbx_{t-1},\vbx_0)q(\vbx_{t-1}\mid \vbx_0)}{q(\vbx_t\mid \vbx_0)} 
-    &=\f{\calN(\vbx_t;\sqrt{\alpha_t} \vbx_{t-1},(1-\alpha_t)\mathbf{I}))\calN(\vbx_{t-1};\sqrt{\overline{\alpha}_{t-1}}\vbx_0,(1-\overline{\alpha}_{t-1}\mathbf{I}))}{\calN(\vbx_t;\sqrt{\overline{\alpha}_t}\vbx_0,(1-\overline{\alpha}_t)\mathbf{I})} 
-    &\propto \calN\bpa{\vbx_{t-1};\f{\sqrt{\alpha_t}(1-\overline{\alpha}_{t-1})\vbx_t+\sqrt{\overline{\alpha}_{t-1}}(1-\alpha_t)\vbx_0}{1-\overline{\alpha}_t},\f{(1-\alpha_t)(1-\overline{\alpha}_{t-1})}{1-\overline{\alpha}_t}\mathbf{I}} 
+    &=\f{q(\vbx_t\mid \vbx_{t-1},\vbx_0)q(\vbx_{t-1}\mid \vbx_0)}{q(\vbx_t\mid \vbx_0)} \\
+    &=\f{\calN(\vbx_t;\sqrt{\alpha_t} \vbx_{t-1},(1-\alpha_t)\mathbf{I}))\calN(\vbx_{t-1};\sqrt{\overline{\alpha}_{t-1}}\vbx_0,(1-\overline{\alpha}_{t-1}\mathbf{I}))}{\calN(\vbx_t;\sqrt{\overline{\alpha}_t}\vbx_0,(1-\overline{\alpha}_t)\mathbf{I})} \\
+    &\propto \calN\bpa{\vbx_{t-1};\f{\sqrt{\alpha_t}(1-\overline{\alpha}_{t-1})\vbx_t+\sqrt{\overline{\alpha}_{t-1}}(1-\alpha_t)\vbx_0}{1-\overline{\alpha}_t},\f{(1-\alpha_t)(1-\overline{\alpha}_{t-1})}{1-\overline{\alpha}_t}\mathbf{I}} \\
     &=\calN(\mu_q(\vbx_t),\Sigma_q(t)), 
   }
   so the prior matching term becomes 
   \BA{
-    &\sum_{t=2}^{T} \Eb_{q(\vbx_t\mid\vbx_0)}\calD_\text{KL}(q(\vbx_t\mid \vbx_{t},\vbx_0)\Vert p_\theta(\vbx_{t-1}\mid \vbx_{t})) 
-    &=\f{1}{2}\bbb{\log\f{\bab{\Sigma_y}}{\bab{\Sigma_x}}-d+\mathrm{tr}(\Sigma_y^{-1}\Sigma_x)+(\mu_y-\mu_x)^\top \Sigma_y^{-1}(\mu_y-\mu_x)} 
+    &\sum_{t=2}^{T} \Eb_{q(\vbx_t\mid\vbx_0)}\calD_\text{KL}(q(\vbx_t\mid \vbx_{t},\vbx_0)\Vert p_\theta(\vbx_{t-1}\mid \vbx_{t})) \\
+    &=\f{1}{2}\bbb{\log\f{\bab{\Sigma_y}}{\bab{\Sigma_x}}-d+\mathrm{tr}(\Sigma_y^{-1}\Sigma_x)+(\mu_y-\mu_x)^\top \Sigma_y^{-1}(\mu_y-\mu_x)} \\
     &=\f{1}{2\sigma^2_q(t)}\bbb{\bnm{\mu_\theta-\mu_q}_2^2}
   }
   where $\sigma_q^2(t)=\f{(1-\alpha_t)(1-\overline{\alpha}_{t-1})}{1-\overline{\alpha}_t}$ because the variances of both Gaussians match exactly. Here, $\mu_q(\vbx_t,\vbx_0)$ denotes the noised mean and $\mu_\theta(\vbx_t)$ denotes the denoised mean. The denoising transition mean can be rewritten as
@@ -960,7 +960,7 @@
 
   \textbf{ELBO for Diffusion Models Form 2}: Recall that
   \BA{
-    q(\vbx_t\mid \vbx_0)&=\calN{\vbx_t;\sqrt{\overline{\alpha}_t}\vbx_0,(1-\overline{\alpha}_t)\mathbf{I}} 
+    q(\vbx_t\mid \vbx_0)&=\calN{\vbx_t;\sqrt{\overline{\alpha}_t}\vbx_0,(1-\overline{\alpha}_t)\mathbf{I}} \\
     \vbx_t&=\sqrt{\overline{\alpha}_t}\vbx_0+\sqrt{1-\overline{\alpha}_t}\vec{\epsilon}_0
   }
   which gives that
@@ -970,7 +970,7 @@
   Then,
   \BA{
     \vec{\mu}_q(\vbx_t,\vbx_0)
-    &=\f{\sqrt{\alpha_t}(1-\overline{\alpha}_{t-1})\vbx_t+\sqrt{\overline{\alpha}_{t-1}}(1-\alpha_t)\vbx_0}{1-\overline{\alpha}_t} 
+    &=\f{\sqrt{\alpha_t}(1-\overline{\alpha}_{t-1})\vbx_t+\sqrt{\overline{\alpha}_{t-1}}(1-\alpha_t)\vbx_0}{1-\overline{\alpha}_t} \\
     &=\f{\vbx_t}{\sqrt{\alpha_t}}-\f{1-\alpha_t}{\sqrt{1-\overline{\alpha}_t}\sqrt{\alpha_t}}\vec{\epsilon}_0.
   }
   Similarly, the denoising transition mean can be rewritten as
@@ -1035,7 +1035,7 @@
   \item Similar to Actor-Critic, these can be trained jointly with a state embedding with separate heads to predict the action and value function. 
   }
 
-  \textbf{AlphaGo \cite{silver2016mastering}}: First, train cheap policy $p_\pi$ and expersive policy $p_\sigma$ using imitation learning on human expert games. Then, train a new policy $p_\rho$ with RL and self-play initialized from the $p_\sigma$ policy. Train a value network $v_\theta$ that predicts the winner of games played by $p_\rho$ against itself. At test time, MCTS is used to select the best move. 
+  \textbf{AlphaGo \cite{silver2016mastering}}: First, train cheap policy $p_\pi$ and expersive policy $p_\sigma$ using imitation learning on human expert games. Then, train a new policy $p_\rho$ with RL and self-play initialized from the $p_\sigma$ policy. Train a value network $V_\theta$ that predicts the winner of games played by $p_\rho$ against itself. At test time, MCTS is used to select the best move. 
 
   The action selection policy of the MCTS is given by
   \BE{
@@ -1043,7 +1043,7 @@
   }
   where $\pi_\theta(a\mid s)$ is the prior expert probabilities provided by $p_\sigma$, $Q(s_r,a)$ is the average reward collected so far from MC simulations, and $N(s,a)$ is the number of times action $a$ has been taken in state $s$. A leaf node $L$ is evaluated as
   \BE{
-    V(s_L)=(1-\lambda)v_\theta(s_L)+\lambda z_L
+    V(s_L)=(1-\lambda)V_\theta(s_L)+\lambda z_L
   }
   where $z_L$ is the roward from the fast rollout $p_\pi$ (done in parallel) and $\lambda$ isa mixing parameter. Once the MCTS completes, the algorithm chooses the most visited move from the root position. 
 
@@ -1103,8 +1103,8 @@
   \BI{
   \item Suppose there are $B$ models in the ensemble. In CEM, we first sample an action sequence $\vva_{t\dots T}$ from the learned action sequence distribution. For each model $b\in\bbr{1,\dots,B}$, set $s_t^{(b)}=s_t$ and compute for each following step,
     \BA{
-      s_{k+1}^{(b)}&\sim p_k(s_k^{(b)},a_k) 
-      r_k^{(b)} &= r(s_k^{(b)}, a_k) 
+      s_{k+1}^{(b)}&\sim p_k(s_k^{(b)},a_k) \\
+      r_k^{(b)} &= r(s_k^{(b)}, a_k) \\
       R^{(b)}(\vva)&=\sum_{k=t}^T r(s_k^{(b)},a_k)
     }
     Then, the return for $\vva$ is said to be the average across all $R^{(b)}(\vva)$. Note that the states are not averaged across ensembles.
@@ -1153,8 +1153,8 @@
   where
   \BA{
     \calL(\theta;\Gamma_i)
-    &=\lambda_1\underbrace{\bnm{R_\theta(\vbz_i,\vva_i)-r_i}_2^2}_\text{reward} 
-    &\;+\lambda_2\underbrace{\bnm{Q_\theta(\vbz_i,\vva_i)-(r_i+\gamma Q_{\theta^-}(\vbz_{i+1},\pi_\theta(\vbz_{i+1})))}_2^2}_\text{value} 
+    &=\lambda_1\underbrace{\bnm{R_\theta(\vbz_i,\vva_i)-r_i}_2^2}_\text{reward} \\
+    &\;+\lambda_2\underbrace{\bnm{Q_\theta(\vbz_i,\vva_i)-(r_i+\gamma Q_{\theta^-}(\vbz_{i+1},\pi_\theta(\vbz_{i+1})))}_2^2}_\text{value} \\
     &\;+\lambda_3\underbrace{\bnm{d_\theta(\vbz_i,\vva_i)-h_{\theta^-}(\vvs_{i+1}))}_2^2}_\text{latent state consistency}.
   }
   Here, $\theta^-$ represent the parameters of a target network that is a moving average of $\theta$. Then, the policy minimizes
@@ -1284,27 +1284,27 @@
 
   \textbf{Offline RL with Actor-Critic}: One approach is to apply a standard off-policy RL algorithm like actor-critic (e.g., DDPG) to an offline dataset. This corresponds to critic updates
   \BE{
-    \min_\phi \Eb_{(s,a,a')\sim\calD} \bpa{q_\phi^\pi(s,a)-\bpa{r(s,a)+\gamma\Eb_{a'\sim \pi_\theta(\cdot\mid s') q_\phi^\pi(s',a')}}}^2
+    \min_\phi \Eb_{(s,a,a')\sim\calD} \bpa{Q_\phi^\pi(s,a)-\bpa{r(s,a)+\gamma\Eb_{a'\sim \pi_\theta(\cdot\mid s')} Q_\phi^\pi(s',a')}}^2
   }
   and actor updates
   \BE{
-    \max_\theta \Eb_{s\sim\calD, a\sim\pi_\theta(\cdot\mid s)} q^\pi(s,a) 
-    \nabla_\theta J(\theta)=\frac{1}{N}\sum_i \nabla_\theta\log \pi_\theta(a_i^\pi\mid s_i)q^{\pi_\theta}_\phi(s_i,a_i^\pi)
+    \max_\theta \Eb_{s\sim\calD, a\sim\pi_\theta(\cdot\mid s)} Q_\phi^\pi(s,a)
+    \nabla_\theta J(\theta)=\frac{1}{N}\sum_i \nabla_\theta\log \pi_\theta(a_i^\pi\mid s_i)Q_\phi^{\pi_\theta}(s_i,a_i^\pi)
   }
   where $a_i^\pi\sim \pi_\theta(\cdot\mid s_i)$.
   \BI{
   \item Off-policy deep reinforcement learning fails when truly off-policy, even when the algorithm and base dataset are the same. This is due to \textbf{distribution shift} problem: $a'$ is sampled from the policy and out of distribution from the dataset. This leads to overestimation on OOD actions. 
   \item
-    Specifically, suppose we train a reward modelr $\hat{r}_\theta(\vbx,\vba)$ that approximates $r(\vbx,\vba)$ in expectation under $p_\text{data}(\vba,\vbx)$, but is incorrect on unseen actions. The policy then exeploits errors in this reward function.
+    Specifically, suppose we train a reward modelr $\hat{r}_\theta(x,a)$ that approximates $r(x,a)$ in expectation under $p_\text{data}(a,x)$, but is incorrect on unseen actions. The policy then exeploits errors in this reward function.
   }
 
   \textbf{Filtered Behavior Cloning}: A simple baseline is to filter the dataset by taking only top trajectories by reward $\tilde{\calD}=\{\tau\mid r(\tau)>\eta\}$ and train only on those state-action pairs. 
 
   \textbf{Combining Behavior Cloning with TD3 \cite{fujimoto2021minimalist}}: We add a behavior cloning term to the TD3 loss to keep predicted actions close to the given actions:
   \BE{
-    J(\theta)=\Ep{(s,a)\sim\calD}{-\lambda q^{\pi_\theta}_\phi(s,\pi_\theta(s))+\bnm{\pi_\theta(s)-a}^2}
+    J(\theta)=\Ep{(s,a)\sim\calD}{-\lambda Q_\phi^{\pi_\theta}(s,\pi_\theta(s))+\bnm{\pi_\theta(s)-a}^2}
   }
-  with parameters $\lambda=\alpha/\Ep{\calD}{\bab{q(s,a)}}$ and $\alpha=2.5$. 
+  with parameters $\lambda=\alpha/\Ep{\calD}{\bab{Q(s,a)}}$ and $\alpha=2.5$. 
 
   \textbf{Batch-Constrained Q Learning (BCQ) \cite{fujimoto2019off}}: Constrain actions to only actions in the dataset, and only consider actions that are likely under the data distribution. This can be done with a generative model such as a conditional VAE or a diffusion model $G_\omega(a\mid s)$. Then, sample an action $a_i'\sim G_\omega(s)$ and take the action $a_i=a_i'+\xi_\phi(s,a)$ where $\xi_\phi$ adds a small perturbation near the dataset. The action taken is given by
   \BE{
@@ -1312,16 +1312,16 @@
   }
   The Bellman backup is similar to that of the TD3:
   \BA{
-    y&=r+\gamma\max_{a_i}\bbb{\lambda \min_{j\in\bbr{1,2}} Q_{\overline{\theta}_j}(\vbs', \vba_i)} \\
-    \theta_j&:=\argmin_{\theta_j} \sum\bpa{Q_{\theta_j}(\vbs,\vba)-y}^2 \\
-    \phi&:=\argmax_\phi \sum Q_{\theta_1} (\vbs,\vba+\xi_\phi(\vbs,\vba))
+    y&=r+\gamma\max_{a_i}\bbb{\lambda \min_{j\in\bbr{1,2}} Q_{\overline{\theta}_j}(s', a_i)} \\
+    \theta_j&:=\argmin_{\theta_j} \sum\bpa{Q_{\theta_j}(s,a)-y}^2 \\
+    \phi&:=\argmax_\phi \sum Q_{\theta_1} (s,a+\xi_\phi(s,a))
   }
-  where $\vba\sim G_\omega(\vbs)$. Then, the target networks are soft-updated.
+  where $a\sim G_\omega(s)$. Then, the target networks are soft-updated.
 
-  \textbf{Conservative Q Learning}: In conservative models, the estimated reward model $\hat{r}_\theta(\vbx,\vba)$ is ``conservative'' in the sense that $\hat{r}_\theta(\vbx,\overline{\vba})\leq r(\vbx,\overline{\vba})$ on unseen actions. This loss is given by
+  \textbf{Conservative Q Learning}: In conservative models, the estimated reward model $\hat{r}_\theta(x,a)$ is ``conservative'' in the sense that $\hat{r}_\theta(x,\overline{a})\leq r(x,\overline{a})$ on unseen actions. This loss is given by
   \BA{
-    \min_\phi \max_\mu &\vbE_{(\vbs,\vba,\vbs')\sim\calD}\bpa{Q_\phi^\pi(\vbs,\vba)-\bpa{r(\vbs,\vba)+\gamma\vbE_{a'\sim\pi_\theta(\cdot\mid\vbs')} Q_\phi^\pi(\vbs',\vba')}}^2\\
-                       &\quad +\alpha \Eb_{\vbs\sim\calD,\vba\sim\mu(\cdot\mid\vbs)} Q_\phi^\pi(\vbs,\vba)-\alpha\Eb_{(\vbs,\vba)\sim\calD} Q_\phi^\pi(s,a)+\Eb_{\vbs\sim\calD}\calH(\mu(\cdot\mid\vbs)),
+    \min_\phi \max_\mu &\Eb_{(s,a,s')\sim\calD}\bpa{Q_\phi^\pi(s,a)-\bpa{r(s,a)+\gamma\Eb_{a'\sim\pi_\theta(\cdot\mid s')} Q_\phi^\pi(s',a')}}^2\\
+                       &\quad +\alpha \Eb_{s\sim\calD,a\sim\mu(\cdot\mid s)} Q_\phi^\pi(s,a)-\alpha\Eb_{(s,a)\sim\calD} Q_\phi^\pi(s,a)+\Eb_{s\sim\calD}\calH(\mu(\cdot\mid s)),
   }
   where $\mu$ is an auxiliary action distribution to probe where the critic is assigning large values. The terms of the loss correspond to the standard TD learning critic update, increased loss for large $Q$-values, decreased loss for $Q$-values for in-dataset actions, and an regularization term to prevent $\mu$ from collapsing into a single argmax action.
 
@@ -1329,51 +1329,51 @@
     \item
       Consider finding
       \BE{
-        \max_\mu \Eb_{\vba\sim\mu(\cdot\mid\vbs)} Q(s,a)+\calH(\mu(\cdot\mid\vbs))
+        \max_\mu \Eb_{a\sim\mu(\cdot\mid s)} Q(s,a)+\calH(\mu(\cdot\mid s))
       }
-      for a fixed state $\vbs$. The \textbf{partition function} is defined as 
+      for a fixed state $s$. The \textbf{partition function} is defined as 
       \BE{
-        Z(s)=\sum_{\overline{\vba}}\exp Q(\vbs,\overline{\vba})
+        Z(s)=\sum_{\overline{a}}\exp Q(s,\overline{a})
       }
       Then, the Boltzmann/softmax form of the optimal distribution is expressed as
       \BE{
-        \mu^*(\vba\mid\vbs)=\f{\exp Q(\vbs,\vba)}{Z(s)}.
+        \mu^*(a\mid s)=\f{\exp Q(s,a)}{Z(s)}.
       }
       taking the log and rearranging yields
       \BA{
-        Q(\vbs,\vba)&=\log\mu(\vba\mid\vbs)+Z(\vbs) \\
-        \Eb_{\vba\sim\mu(\cdot\mid\vbs)} Q(\vbs,\vba)&=\Eb_{\vba\sim\mu(\cdot\mid\vbs)}\log\mu(\vba\mid\vbs)+\log Z(\vbs).
+        Q(s,a)&=\log\mu(a\mid s)+Z(s) \\
+        \Eb_{a\sim\mu(\cdot\mid s)} Q(s,a)&=\Eb_{a\sim\mu(\cdot\mid s)}\log\mu(a\mid s)+\log Z(s).
       }
-      Since the entropy term is exactly $\Eb_{\vba\sim\mu(\cdot\mid\vbs)}\log\mu(\vba\mid\vbs)$, the optimal distribution is simply
+      Since the entropy term is exactly $\Eb_{a\sim\mu(\cdot\mid s)}\log\mu(a\mid s)$, the optimal distribution is simply
       \BE{
-        Z(s)=\log\sum_\vba \exp Q(\vbs, \vba)
+        Z(s)=\log\sum_a \exp Q(s, a)
       }
   }
   The new expression becomes 
   \BA{
-    \min_\phi &\vbE_{(\vbs,\vba,\vbs')\sim\calD}\bpa{Q_\phi^\pi(\vbs,\vba)-\bpa{r(\vbs,\vba)+\gamma\vbE_{a'\sim\pi_\theta(\cdot\mid\vbs')} Q_\phi^\pi(\vbs',\vba')}}^2\\
-              &\quad -\alpha\Eb_{(\vbs,\vba)\sim\calD} Q_\phi^\pi(s,a)+\alpha\log\sum_{\overline{\vba}}\exp Q_\phi^\pi(\vbs,\overline{\vba}).
+    \min_\phi &\Eb_{(s,a,s')\sim\calD}\bpa{Q_\phi^\pi(s,a)-\bpa{r(s,a)+\gamma\Eb_{a'\sim\pi_\theta(\cdot\mid s')} Q_\phi^\pi(s',a')}}^2\\
+              &\quad -\alpha\Eb_{(s,a)\sim\calD} Q_\phi^\pi(s,a)+\alpha\log\sum_{\overline{a}}\exp Q_\phi^\pi(s,\overline{a}).
   }
   The corresponding actor updates are simply given by
   \BE{
-    \max_\theta \Eb_{\vbs\sim\calD,\vba\sim\pi_\theta(\cdot\mid\vbs)} Q^\pi(\vbs,\vba)
+    \max_\theta \Eb_{s\sim\calD,a\sim\pi_\theta(\cdot\mid s)} Q^\pi(s,a)
   }
 
   \textbf{Advantage-Weighted Behavior Cloning}: A simple extension of behavior cloning to offline RL is to weight the contribution of each state-action-reward pair by their corresponding advantage:
   \BE{
-    \argmax_\theta \Ep{(\vbs,\vba)\sim\calD}{\log\pi_\theta(\vba\mid\vbs)\exp A(\vbs,\vba)}.
+    \argmax_\theta \Ep{(s,a)\sim\calD}{\log\pi_\theta(a\mid s)\exp A(s,a)}.
   }
-  This requires computing advantages $A(\vbs,\vba)=Q(\vbs,\vba)-V(\vbs)$ without querying OOD actions.
+  This requires computing advantages $A(s,a)=Q(s,a)-V(s)$ without querying OOD actions.
 
   \textbf{Advantage-Weighted Regression (AWR)}: Suppose the buffer is generated with some policy $\pi_\beta$. We can estimate the state-value function with Monte Carlo:
   \BA{
-    \hat{V}^{\pi_\beta}(\vbs)&:=\min_\phi \Eb_{\vbs_t\sim\calD} \bnm{\hat{V}^{\pi_\beta}_\phi(\vbs_t)-\sum_{t'=t}^T r(\vbs_{t'},\vba_{t'})}^2 \\
-    \hat{A}^{\pi_\beta}(\vbs_t,\vba_t)&:=\sum_{t'=t}^T r(\vbs_{t'},\vba_{t'})-\hat{V}^{\pi_\beta}_\phi(\vbs_t)
+    V^{\pi_\beta}(s)&:=\min_\phi \Eb_{s_t\sim\calD} \bnm{V^{\pi_\beta}_\phi(s_t)-\sum_{t'=t}^T r(s_{t'},a_{t'})}^2 \\
+    A^{\pi_\beta}(s_t,a_t)&:=\sum_{t'=t}^T r(s_{t'},a_{t'})-V^{\pi_\beta}_\phi(s_t)
   }
   Then, we extract the policy
   \BE{
     \hat{\theta}:=
-    \argmax_\theta \Ep{(\vbs,\vba)\sim\calD}{\log\pi_\theta(\vba\mid\vbs)\exp\bpa{\f{1}{\beta}\hat{A}^{\pi_\beta}(\vbs,\vba)}}.
+    \argmax_\theta \Ep{(s,a)\sim\calD}{\log\pi_\theta(a\mid s)\exp\bpa{\f{1}{\beta}A^{\pi_\beta}(s,a)}}.
   }
   Here, $\beta$ is a parameter that controls the shapness of reweighting.
   \BI{
@@ -1386,36 +1386,36 @@
 
   \textbf{Boltzmann Reweighting of Policy}: We show that the AWR algorithm is exactly the KL-regularized policy improvement. Let $\pi$ and $\mu$ be two policies. From the performance difference lemma,
   \BE{
-    J(\pi)-J(\mu)=\Eb_{\tau\sim p_\pi}\sum_{t=0}^\infty \gamma^t A^\mu(\vbs_t,\vba_t)=\Eb_{\vbs\sim d^\pi,\vba\sim\pi(\cdot\mid\vbs)} A^\mu(\vbs,\vba)\approx \Eb_{\vbs\sim d^\mu,\vba\sim\pi(\cdot\mid\vbs)} A^\mu(\vbs,\vba),
+    J(\pi)-J(\mu)=\Eb_{\tau\sim p_\pi}\sum_{t=0}^\infty \gamma^t A^\mu(s_t,a_t)=\Eb_{s\sim d^\pi,a\sim\pi(\cdot\mid s)} A^\mu(s,a)\approx \Eb_{s\sim d^\mu,a\sim\pi(\cdot\mid s)} A^\mu(s,a),
   }
-  where we assume that $\Eb_{\vbs\sim d^\mu}\bbb{D_\text{KL}(\pi\Vert\mu)} \leq \epsilon$ for the approximation to be valid. The Lagrangian is given by
+  where we assume that $\Eb_{s\sim d^\mu}\bbb{D_\text{KL}(\pi\Vert\mu)} \leq \epsilon$ for the approximation to be valid. The Lagrangian is given by
   \BA{
     \calL(\pi,\beta)
-    &=\int_\vbs d_\mu(\vbs)\int_\vba \pi(\vba\mid\vbs)A^\mu(\vbs,\vba)\d\vba\d\vbs
-      -\beta\bpa{\int_\vbs d_\mu(\vbs) \calD_\text{KL}\bpa{\pi(\cdot\mid\vbs)\Vert\mu(\cdot\mid\vbs)}\d\vbs - \epsilon} \\
-    &=\int_\vbs d_\mu(\vbs)\int_\vba \pi(\vba\mid\vbs)A^\mu(\vbs,\vba)\d\vba\d\vbs
-      -\beta\bpa{\int_\vbs d_\mu(\vbs)\int_\vba \pi(\vba\mid\vbs)\log\f{\pi(\vba\mid\vbs)}{\mu(\vba\mid\vbs)}\d\vba\d\vbs - \epsilon}
+    &=\int_s d_\mu(s)\int_a \pi(a\mid s)A^\mu(s,a)\d a\d s
+      -\beta\bpa{\int_s d_\mu(s) \calD_\text{KL}\bpa{\pi(\cdot\mid s)\Vert\mu(\cdot\mid s)}\d s - \epsilon} \\
+    &=\int_s d_\mu(s)\int_a \pi(a\mid s)A^\mu(s,a)\d a\d s
+      -\beta\bpa{\int_s d_\mu(s)\int_a \pi(a\mid s)\log\f{\pi(a\mid s)}{\mu(a\mid s)}\d a\d s - \epsilon}
   }
   Taking the functional derivative, we get that
   \BE{
-    \f{\delta\calL}{\delta\pi(\vba\mid\vbs)}
-    = d_\mu(\vbs)A^\mu(\vbs,\vba) - \beta\, d_\mu(\vbs)\bpa{\log\f{\pi(\vba\mid\vbs)}{\mu(\vba\mid\vbs)}+1}
+    \f{\delta\calL}{\delta\pi(a\mid s)}
+    = d_\mu(s)A^\mu(s,a) - \beta\, d_\mu(s)\bpa{\log\f{\pi(a\mid s)}{\mu(a\mid s)}+1}
   }
   Setting for zero and solving for $\pi$, we get
   \BE{
-    d_\mu(\vbs)A^\mu(\vbs,\vba) - \beta\, d_\mu(\vbs)\bpa{\log\f{\pi(\vba\mid\vbs)}{\mu(\vba\mid\vbs)}+1} = 0
+    d_\mu(s)A^\mu(s,a) - \beta\, d_\mu(s)\bpa{\log\f{\pi(a\mid s)}{\mu(a\mid s)}+1} = 0
   }
   \BE{
-    \f{\pi(\vba\mid\vbs)}{\mu(\vba\mid\vbs)} = \exp\bpa{\f{1}{\beta}A^\mu(\vbs,\vba)-1} = e^{-1}\cdot\exp\bpa{\f{1}{\beta}A^\mu(\vbs,\vba)}
+    \f{\pi(a\mid s)}{\mu(a\mid s)} = \exp\bpa{\f{1}{\beta}A^\mu(s,a)-1} = e^{-1}\cdot\exp\bpa{\f{1}{\beta}A^\mu(s,a)}
   }
   Absorb constants into normalization:
   \BE{
-    \pi^*(\vba\mid\vbs) \propto \mu(\vba\mid\vbs)\exp\bpa{\f{1}{\beta}A^\mu(\vbs,\vba)}
+    \pi^*(a\mid s) \propto \mu(a\mid s)\exp\bpa{\f{1}{\beta}A^\mu(s,a)}
   }
   Then, project $\pi^*$ onto the manifold of parameterized policies:
   \BA{
-    &\argmin_\pi\; \Eb_{\vbs\sim\calD}\bbb{D_\text{KL}\bpa{\pi^*(\cdot\mid\vbs)\Vert\pi(\cdot\mid\vbs)}} \\
-    &= \argmax_\pi\; \Eb_{\vbs\sim d_\mu(\vbs),\,\vba\sim\mu(\cdot\mid\vbs)}\bbb{\log\pi(\vba\mid\vbs)\exp\bpa{\f{1}{\beta}A^\mu}}.
+    &\argmin_\pi\; \Eb_{s\sim\calD}\bbb{D_\text{KL}\bpa{\pi^*(\cdot\mid s)\Vert\pi(\cdot\mid s)}} \\
+    &= \argmax_\pi\; \Eb_{s\sim d_\mu(s),\,a\sim\mu(\cdot\mid s)}\bbb{\log\pi(a\mid s)\exp\bpa{\f{1}{\beta}A^\mu}}.
   }
 
   \textbf{Expectile Regression}: The $\tau$-expectile is the mean with asymmetric weighting
@@ -1426,12 +1426,148 @@
 
   \textbf{Implicit Q Learning (IQL)}: We modify TD learning to use $L_2^\tau$:
   \BA{
-    V_\psi(\vbs)&:=\argmin_{V} \Eb_{(\vbs,\vba)\sim\calD} L_2^\lambda(V(\vbs)-Q_\phi^\calD(\vbs,\vba)) \\
-    Q_\phi^\calD(\vbs,\vba)&:=\argmin_Q \Eb_{(\vbs,\vba,\vbs')\sim\calD} \bpa{Q(\vbs,\vba)-\bpa{r(\vbs,\vba)+\gamma V_\psi(\vbs')}}^2.
+    V_\psi(s)&:=\argmin_{V} \Eb_{(s,a)\sim\calD} L_2^\lambda(V(s)-Q_\phi^\calD(s,a)) \\
+    Q_\phi^\calD(s,a)&:=\argmin_Q \Eb_{(s,a,s')\sim\calD} \bpa{Q(s,a)-\bpa{r(s,a)+\gamma V_\psi(s')}}^2.
   }
   The policy is extracted via AWR:
   \BE{
-    \argmax_\pi \Ep{(\vbs,\vba)\sim\calD}{\log\pi(\vba\mid\vbs)\exp\bpa{\f{1}{\beta}\bpa{Q_\phi^\calD(\vbs,\vba)-V_\psi(\vbs)}}}.
+    \argmax_\pi \Ep{(s,a)\sim\calD}{\log\pi(a\mid s)\exp\bpa{\f{1}{\beta}\bpa{Q_\phi^\calD(s,a)-V_\psi(s)}}}.
+  }
+
+\section{Exploration}
+
+  \textbf{$\boldsymbol{\epsilon}$-greedy Disadvantages}: The probability of identifying a favorable trajectory decreases as the number of actions and the time-horizon until the reward increases.
+
+  \textbf{Motivation for Exploration}: Motivation can be \textbf{extrinsic}, or driven by some external reward, or \textbf{intrinsic}, being moved to do something because it is inherently enjoyable (e.g., curiosity, exploration, novelty, etc.). The latter is important because it is task independent and free of human supervision.
+  \BI{
+    \item
+      Methods for inducing curiosity-driven exploration include: using ensembles of $Q$ functions to model uncertainty, \textbf{state counting} to approximate distributions of sampled states, measuring \textbf{model prediction error}, and measuring \textbf{reachability} from already explored states.
+  }
+
+  \textbf{Multi-armed Bandit Problem}: At each time step $t$, an agent chooses arm $k\in[K]$ and plays it, yielding reward $r_{k,t}\sim \calP_k$ where $\E{\calP_k}=\mu_k$. The distributions $\calP_k$ and means $\mu_k$ are unknown to the agent. The objective is to maximize the cumulative rewards, over a finite or infinite horizon.
+
+  \textbf{Action-Value}: The action-value for an action $a$ is its mean reward
+  \BE{
+    q_*(a)=\Ec{r_t}{a_t=a}.
+  }
+  \BI{
+    \item
+      Suppose the agent forms estimates $\fa a\in\calA, Q_t(a)\approx q_*(a)$. Define the \textbf{greedy action} at time $t$ as
+      \BE{
+        a_t^*=\argmax_a Q_t(a).
+      }
+      Then, if $a_t=a_t^*$, the agent is \textbf{exploiting}; otherwise, the agent is \textbf{exploring}.
+  }
+
+  \textbf{Regret}: Let $\mu^*=\max_{a\in\mathcal{A}} \mu_a$ be the maximum expected mean reward. The cummulative regret up to time $t$ is defined as
+  \BE{
+    I_t=\sum_{i=1}^t \Delta_{a_i}=\sum_{i=1}^t (\mu^*-\mu_{a_t}).
+  }
+  Equivalently, we have that
+  \BE{
+    \E{I_t}=\sum_{a\in\calA} \Delta_a\E{N_a(t)}.
+  }
+
+  \textbf{Action-Value Estimates}: We focus on one action for simplicity. Suppose the rewards for the first $n-1$ timesteps are $r_1,\dots,r_{n-1}$. Then, the estimate is simply the mean:
+  \BE{
+    Q_n=\f{1}{n-1}(r_1+\cdots+r_{n-1}).
+  }
+  The online update rule is given by
+  \BE{
+    Q_{n+1}:= Q_n+\f{1}{n}(r_n-Q_n).
+  }
+
+  \textbf{Fixed Exploration Action Selection}: We allocate a fixed time period to explore, trying bandits uniformly at random. Then, mean rewards are formed for all actions:
+  \BE{
+    Q_t(a)=\f{1}{N_t(a)}\sum_{i=1}^{t-1}r_i \mathbf{1}(a_i=a)
+  }
+  (assuming that each bandit is a Bernoulli r.v.). Then, the action selected at each time step is the maximum among all estimated mean rewards. In an infinite horizon setting, the fixed exploration strategy will always exploit.
+
+  \textbf{$\boldsymbol{\epsilon}$-Greedy Action Selection}: In $\epsilon$-greedy, the agent explores with probability $\epsilon$ and explores otherwise. This is the simplest way to balance exploration and exploitation. Constant $\epsilon$ produces linear total regret:
+  \BE{
+    I_t\geq \f{\epsilon}{K}\sum_{a\in\calA}\Delta_a,
+  }
+  implying that $I_t/t$ approaches a constant as $t\to\infty$.
+
+  \textbf{Bayesian Bandits}: Bayesian bandits compute the posterior distribution of rewards
+  \BE{
+    p\bbb{\calR\mid a_1,r_1,\dots,a_{t-1},r_{t-1}}.
+  }
+  This is computed by specifying a prior $p(\calR)$ and applying Bayes' rule.
+
+  \textbf{Thompson Sampling}: At each time step, sample from the mean reward distributions:
+  \BE{
+    \fa k\in[K], \overline{\theta}_k\sim\hat{p}(\theta_k).
+  }
+  Then, action $a_t=\argmax_a \overline{\theta}_a$ is chosen. This sampling scheme enables arms with lower expected mean value but high variance to be explored. Then, the mean reward posterior distributions are updated.
+  \BI{
+    \item
+      If each bandit is Bernoulli, then the prior can be modeled as a \textbf{Beta distribution}:
+      \BE{
+        p(\theta_k)=\f{\Gamma(\alpha_k+\beta_k)}{\Gamma(\alpha_k)\Gamma(\beta_k)}\theta_k^{\alpha_k-1}(1-\theta_k)^{\beta_k-1}
+      }
+      where $\Gamma(n)=(n-1)!$. This has mean $\alpha/(\alpha+\beta)$. The larger $\alpha+\beta$ is, the more concentrated the distribution is.
+
+      Because the beta distribution is the conjugate distribution for the Bernoulli distribution, the posterior is also the beta distribuotion. The closed form solution to the Bayesian update for $a_t=k$ is $(\alpha_k,\beta_k):=(\alpha_k+r_t,\beta_k+(1-r_t))$.
+
+    \item
+      The distinction between a greedy bandit and a Thompson-sampled bandit is that the former has $\overline{\theta}_k:=\alpha_k/(\alpha_k+\beta_k)$ whereas the latter samples $\overline{\theta}_k\sim\text{beta}(\alpha_k,\beta_k)$.
+  }
+
+  \textbf{Exploration via Posterior Sampling of $\boldsymbol{Q}$ functions}: We can extend this to $Q$ functions by representing a \textbf{posterior distribution} of $Q$ functions. At each step, we sample from $\overline{Q}\sim P(Q)$ and choose action $a_t=\argmax_a \overline{Q}(s_t,a)$. Then, $P(Q)$ is updated with hte new collected exerience tuples.
+  \BI{
+    \item
+      This can be done using \textbf{Bayesian neural networks} that estimate the posteriors, neural network ensembles (with or without a shared backbone), or ensembling by dropout (by randomly masking network weights to approximate an ensemble).
+  }
+
+  \textbf{Exploration reward bonuses}: Intrinsic (task-independent) exploration can be insentivised by augmenting the task-dependent rewards $r(s,a,s')$ with an intrinsic reward. Note that the exploration reward bonuses are non-stationary.
+
+  \textbf{DeepHashing}: States (images) can be tabulated in latent compressed state (e.g., using an autoencoder). The intrinsic reward is then inversely proportion to the state visitation count.
+
+  \textbf{Model error as an intrinsic reward}: Let $T_\theta(s,a)$ denote the learned dynamics function to an embedding space, and $E_\phi(s)$ to be a state-embedding function in the same latent space. Then, we can use an intrinsic reward proportional to
+  \BE{
+    \Eb_{(s,a,s')\sim\calD}\bnm{T_\theta(s,a)-E_\phi(s')}.
+  }
+  We also add an inverse term $\text{Inv}_\psi$ to predict things that the agent can control:
+  \BE{
+    \Eb_{(s,a,s')\sim\calD}\bnm{\text{Inv}_\psi (E_\phi(s),E_\phi(s'))-a}.
+  }
+
+  \textbf{``Noisy-TV'' Problem}: The prediction error of the transition function is not necessary a useful signal for the \textbf{generalization gap} (high error on novel states unseen during training). Instead, the error may reflect the inherent stochasticity of the environment or limitations of the model representation.
+
+  \textbf{Random Network Distillation (RND)}: We use a synthetic prediction task for uncertainty estimation. Let $\hat{f}: \calS\to\bbR$ be a randomly initialized neural network. We train an identical neural network initialized independently, and use this to estimate uncertainty. This eliminates transition stochasticity because we model the observation space as a deterministic function of some latent variable (modeled by $s'$) and eliminates mode-mismatch because the predictor shares the same architecture.
+
+  \textbf{Episodic Curiosity through Reachability}: Intrinsic rewards are estimated with a non-parametric memory structure populated with embeddings of past image observations. Curiosity reward uses a comparator neural network that takes as input two images and predicts whether they are temporally close (few actions apart). Specifically, each state is embedded and the neural network is trained with \textbf{temporal contrastive learning}:
+  \BE{
+    \calL_\phi(o,o^+,o^-)=\bnm{E_\phi(o)-E_\phi(o^+)}+\max(0,\gamma-\bnm{E_\phi(o)-E_\phi(o^-)}).
+  }
+  The agent is then trained on the combined reward using a standard PPO algorithm.
+  \BI{
+    \item
+      Specifically, the memory buffer stores an embedding if the curiosity bonus of a new state exceeds a novelty threshold $b_\text{novelty}$ and has finite capacity $K$, after which any new state replaces an arbitrarily selected index in the buffer.
+
+    \item
+      Each state is compared sequentially with every state in the buffer using the comparator neural network and scored according to the $90$-th percentile of closest state.
+  }
+
+  \textbf{Detachment Problem}: In intrinsic-motivation exploration, suppose the environment has multiple promising regions with intrinsic reward. The agent starts exploring one region, consumes the novelty bonus there, and drifts away to another novel region. Once it has ``detached'' from the first region, the incentive gradient to back to the region has disappeared, so the region remains underexplored.
+  \BI{
+    \item
+      Replay buffers should solve this in theory but fail in practice because the buffer size needs to be large, which causes optimization/stability issues.
+  }
+
+  \textbf{Derailment problem}: Most reinforcement learinng algorithms perturb a promising policy and hope that it explores further. In most cases, however, this breaks the policy, especially as the length, complexity, and precision of the sequence increases.
+
+  \textbf{Go-Explore}: Addresses the detachment problem by explicitly tracking an archive of trajectories that reached a particular state in the world. This archive is updated with new states reached, shorter trajectories to reach already archived states, and updates to the \textbf{state connectivity map}. 
+  \BI{
+    \item
+      This also addresses derailment by returning to prior states using known trajectories and then exploring. A trajectory is only made robust once it has been completely explored and identified as promising.
+  }
+  The second phase is to \textbf{robustify} the best trajectory using imitation learning on the best trajectory.
+  \BI{
+    \item
+      \textbf{Learning Montezuma's Revenge from a Single Demonstration} uses a similar idea of using a model-free RL method to solve progressively longer suffixes of an expert trajectory to reduce reward sparsity. This is used to robustify an expert demonstration.
+
   }
 
   \newpage
