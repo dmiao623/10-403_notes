@@ -1,0 +1,9 @@
+[project]
+name = "10-403-notes"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "gscholar>=2.1.0",
+]
