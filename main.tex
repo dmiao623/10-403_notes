@@ -5,6 +5,7 @@
 \usetikzlibrary{positioning,arrows.meta}
 
 \usepackage{color, soul}
+% \soulregister{\cite}{1}
 
 \usepackage{pdflscape}
 \usepackage{booktabs}
@@ -235,7 +236,7 @@
   }
   For each step, take action $a$ and observe new state $s'$ and reward $r$. Pick $a'$ from $s'$ from policy derived from $Q$ (e.g. $\epsilon$-greedy). \underline{SARSA is on-policy}. 
 
-  \hl{\textbf{Q-Learning}}: Performs greedy, off-policy TD learning:
+  \hl{\textbf{Q-Learning}} \cite{watkins1992q}: Performs greedy, off-policy TD learning:
   \BE{
     Q(s_t,a_t)\leftarrow Q(s_t,a_t)+\alpha(R_{t+1}+\gamma \max_a Q(s',a)-Q(s_t,a_t)).
   }
@@ -290,7 +291,7 @@
   }
   is off-policy, uses function approximation, and bootstrapping, which makes convergence and efficient learning extremely difficult. 
 
-  \hl{\textbf{Deep Q-Learning}}: Introduces a \textbf{target network} $Q_{\theta^-}$ which is a copy of the \textbf{online network} $Q_\theta$ delayed by some amount which gives a stable estimation of the value function. Also uses an \textbf{experience replay buffer} that stores $(s,a,r,s')$ tuples from many trajectories and allows for data decorrelation and improved sample efficiency. The TD target is given by
+  \hl{\textbf{Deep Q-Learning}} \cite{mnih2015human}: Introduces a \textbf{target network} $Q_{\theta^-}$ which is a copy of the \textbf{online network} $Q_\theta$ delayed by some amount which gives a stable estimation of the value function. Also uses an \textbf{experience replay buffer} that stores $(s,a,r,s')$ tuples from many trajectories and allows for data decorrelation and improved sample efficiency. The TD target is given by
   \BE{
     y^\text{DQN}=r+\gamma\max_{a'} Q_{\theta^-}(s',a').
   }
@@ -298,18 +299,18 @@
     \item In practice, this is implemented as a neural network $Q_\theta: \calS\to \bbR^{\bab{\calA}}$. 
   }
 
-  \hl{\textbf{Double DQN}}: Deep Q-Learning using the online network to select the next action but using the target network to evaluate it:
+  \hl{\textbf{Double DQN}} \cite{van2016deep}: Deep Q-Learning using the online network to select the next action but using the target network to evaluate it:
   \BA{
     a^*&=\argmax_a Q_\theta(s',a') \\
     y^\text{Double-DQN}&=R_{t+1}+\gamma Q_{\theta^-}(s',a^*)
   }
 
-  \hl{\textbf{Clipped Double DQN}}: Use the minimum of target and online network to evaluate the Q function:
+  \hl{\textbf{Clipped Double DQN}} \cite{fujimoto2018addressing}: Use the minimum of target and online network to evaluate the Q function:
   \BE{
     y^\text{Clipped-Double-DQN}=R_{t+1}+\min_{Q\in\bbr{Q_\theta, Q_{\theta^-}}} Q(s',a^*).
   }
 
-  \textbf{Prioritizing Replays}: Within the experience replay buffer, weight each experience by its ``surprise'' or DQN error:
+  \textbf{Prioritizing Replays \cite{schaul2016prioritized}}: Within the experience replay buffer, weight each experience by its ``surprise'' or DQN error:
   \BA{
     p_i&=r_i+\gamma\max_{a} Q_{\theta^-}(s'_i,a)-Q_{\theta}(s'_i,a) \\
     P(i)&=\f{p_i^\alpha}{\sum_k p_k^\alpha}.
@@ -435,7 +436,7 @@
 
   \textbf{Cold-Start Problem}: For trajectories with $0$ reward, policy just randomly explores. 
 
-  \hl{\textbf{REINFORCE Algorithm}}: Combining the two previous derivations with reward function $f(x)=G_t$, we get
+  \hl{\textbf{REINFORCE Algorithm}} \cite{williams1992simple}: Combining the two previous derivations with reward function $f(x)=G_t$, we get
   \BE{
     \hat{g}=\f{1}{N}\sum_{i=1}^N \sum_{t=1}^T \nabla_\theta \log\pi_\theta(a_t^{(i)}\mid s_t^{(i)})G^{(i)}_t
   }
@@ -459,7 +460,7 @@
     }
   }
 
-  \hl{\textbf{Actor-Critic Algorithm}}: Let $V^\pi_\phi(s_t)$ parameterized by $\phi$ approximate $v_\pi(s_t)$ from trajectories derived from $\pi$. The approximate value function can be computed at each step using standard value-based approaches:
+  \hl{\textbf{Actor-Critic Algorithm}} \cite{sutton1999policy}: Let $V^\pi_\phi(s_t)$ parameterized by $\phi$ approximate $v_\pi(s_t)$ from trajectories derived from $\pi$. The approximate value function can be computed at each step using standard value-based approaches:
   \BI{
   \item Monte-Carlo:
     \BE{
@@ -482,7 +483,7 @@
     }
   }
 
-  \hl{\textbf{Advantage Actor-Critic (A2C)}}: We can express $A_\pi(s_t^{(i)},a_t^{(i)})=Q_\phi^\pi(s_t^{(i)},a_t^{(i)})-V_\phi^\pi(s_t^{(i)})$ where $Q_\phi^\pi(s_t^{(i)},a_t^{(i)})=R(s_t^{(i)},a_t^{(i)})+\gamma V_\phi^\pi(s_{t+1}^{(i)})$. 
+  \hl{\textbf{Advantage Actor-Critic (A2C)}} \cite{mnih2016asynchronous}: We can express $A_\pi(s_t^{(i)},a_t^{(i)})=Q_\phi^\pi(s_t^{(i)},a_t^{(i)})-V_\phi^\pi(s_t^{(i)})$ where $Q_\phi^\pi(s_t^{(i)},a_t^{(i)})=R(s_t^{(i)},a_t^{(i)})+\gamma V_\phi^\pi(s_{t+1}^{(i)})$. 
 
   \textbf{High Data Correlation}: Trajectory samples taken in actor-critic algorithms are high correlated, but stochastic gradient requires uncorrelated, uniformly sampled data. Furthermore, actor-critic algorithms are required to be on-policy (so experience buffer does not work). This can be solved in practice by running many RL environments in parallel. 
 
@@ -552,7 +553,7 @@
     \max_{\pi'} (\cdot) - \alpha\Ep{s}{\calD_\text{KL}(\pi'(\cdot\mid s)\Vert \pi(\cdot\mid s))}.
   }
 
-  \hl{\textbf{Proximity Policy Optimization (PPO)}}: Gradient is ``clipped'' (reduced to 0) if $\pi'(a\mid s)$ diverges from $\pi(a\mid s)$. 
+  \hl{\textbf{Proximity Policy Optimization (PPO)}} \cite{schulman2017proximal}: Gradient is ``clipped'' (reduced to 0) if $\pi'(a\mid s)$ diverges from $\pi(a\mid s)$. 
   \BE{
     \max_{\pi'} \Eb_{s\sim d^\pi(\cdot)} \Eb_{a\sim \pi(\cdot\mid s)} \mathrm{clip}\bpa{\f{\pi'(a\mid s)}{\pi(a\mid s)}, 1-\epsilon_-, 1+\epsilon_+}A_\pi(s,a)
   }
@@ -634,7 +635,7 @@
     \alpha=\sqrt{\f{2\delta}{g_N^\top \mathbf{F}^{-1} g_N}}.
   }
 
-  \hl{\textbf{Trust Region Policy Optimization (TRPO)}}: Because the KL divergence bound was derived from the second order Tayler approximation, it may be violated in practice. We can line search for a step size in $\{\alpha^0, \dots, \alpha^L\}$ for the first index s.t. $\overline{\bbA}_{\pi_\text{old}}(\pi)\geq 0$ and $\calD_\text{KL}(\theta_\text{new}\Vert \theta)\leq\delta$. 
+  \hl{\textbf{Trust Region Policy Optimization (TRPO)}} \cite{schulman2015trust}: Because the KL divergence bound was derived from the second order Tayler approximation, it may be violated in practice. We can line search for a step size in $\{\alpha^0, \dots, \alpha^L\}$ for the first index s.t. $\overline{\bbA}_{\pi_\text{old}}(\pi)\geq 0$ and $\calD_\text{KL}(\theta_\text{new}\Vert \theta)\leq\delta$. 
 
 \subsection{Path-Wise Policy Gradients}
 
@@ -678,7 +679,7 @@
     \partial_\theta \Ep{z\sim\calN(0,1)}{f(x(z,\theta))}=\Ep{z\sim\calN(0,1)}{\dydx{f}{x}\bpa{\dydx{\mu(\theta)}{\theta}+z\dydx{\sigma(\theta)}{\theta}}}.
   }
 
-  \hl{\textbf{Deep Deterministic Policy Gradients (DDPG) Actor-Critic}}: DDPG target:
+  \hl{\textbf{Deep Deterministic Policy Gradients (DDPG) Actor-Critic}} \cite{lillicrap2016continuous}: DDPG target:
   \BA{
     a'_{t+1}&\leftarrow \pi_\theta(s_{t+1}) \\
     y_t^\text{DDPG}&\leftarrow r+ \gamma Q_{\overline{\phi}}(s_{t+1},a'_{t+1})
@@ -698,7 +699,7 @@
     \Eb \sum_{t=0}^T \ddx{\theta} Q_\phi(s_t,a_t)=\Eb\sum_{t=0}^T \pypx{Q_\phi(s_t,a)}{a}\vert_{a=a_t}\pypx{a_t}{\theta}=\Eb\sum_{t=0}^T \pypx{Q_\phi(s_t,a)}{a}\vert_{a=a_t}\bpa{\dydx{\mu_\theta(s_t)}{\theta}+z_t\dydx{\sigma_\theta(s_t)}{\theta}}
   }
 
-  \hl{\textbf{Twin Delayed DDPG (TD3)}}: Uses clipped double Q-learning with target policy smoothing and delayed policy updates. The TD3 critic target is
+  \hl{\textbf{Twin Delayed DDPG (TD3)}} \cite{fujimoto2018addressing}: Uses clipped double Q-learning with target policy smoothing and delayed policy updates. The TD3 critic target is
   \BA{
     a'_{t+1}&\leftarrow \pi_{\overline{\theta}}(s_{t+1})+\epsilon \\
     y_t^{\text{TD3}}&\leftarrow r_t+\gamma\min_{i\in\{1,2\}} Q_{\overline{\phi}_i}(s_{t+1},a'_{t+1}) \\
@@ -734,7 +735,7 @@
     q_\pi^\text{soft}(s,a)=r(s,a)+\sum_{s'} P(s'\mid s,a)\sum_{a'} \bpa{q_\pi^\text{soft}(s',a')-\alpha\log \pi(a'\mid s')}.
   }
 
-  \hl{\textbf{Soft Policy Iteration}}: An algorithm similar to policy-gradient iteration for soft policies. The \textbf{soft policy evaluation step} updates
+  \hl{\textbf{Soft Policy Iteration}} \cite{haarnoja2018soft}: An algorithm similar to policy-gradient iteration for soft policies. The \textbf{soft policy evaluation step} updates
   \BE{
     q_\pi^\text{soft}(s,a)=r(s,a)+\gamma\Ep{s',a'\sim\pi(\cdot\mid s')}{q_\pi^\text(s',a')-\alpha\log \pi(a'\mid s')}.
   }
@@ -747,11 +748,11 @@
     \phi^*=\argmax_\phi \Ep{s,a\sim\pi_\phi(\cdot\mid s)}{Q_\theta(s,a)-\alpha\log\pi_\phi(a\mid s)}
   }
 
-  \hl{\textbf{Soft Actor Critic (SAC)}}: Combines soft policy-improvement with ideas from DDPG and TD3. Uses double Q-learning and a replay buffer, with entropy regularization in both the actor and critic losses.
+  \hl{\textbf{Soft Actor Critic (SAC)}} \cite{haarnoja2018soft}: Combines soft policy-improvement with ideas from DDPG and TD3. Uses double Q-learning and a replay buffer, with entropy regularization in both the actor and critic losses.
 
 \section{Imitation Learning}
 
-  \hl{\textbf{Behavior Cloning (BC)}}: Given an expert trajectory $\tau=(s_0,a_0,r_1,s_1,\dots)$ from an expert $\pi^*$, train on supervised objective to match expert:
+  \hl{\textbf{Behavior Cloning (BC)}} \cite{ross2011reduction}: Given an expert trajectory $\tau=(s_0,a_0,r_1,s_1,\dots)$ from an expert $\pi^*$, train on supervised objective to match expert:
   \BE{
     \theta^*=\argmin_\theta \Ep{(s_t,a_t)\sim \pi^*}{-\log\pi_\theta(a_t\mid s_t)}.
   }
@@ -769,7 +770,7 @@
 
 \subsection{Generative Adversarial Networks}
 
-  \hl{\textbf{Generative Adversarial Networks (GAN)}}: A neural network comprised of a \textbf{generator} (sampler: $\text{noise vector}\sim\calN(0,1)\to \text{data})$) and a \textbf{discriminator} (classifier: $\text{data}\to\{\text{clean},\text{generated}\}$):
+  \hl{\textbf{Generative Adversarial Networks (GAN)}} \cite{goodfellow2014generative}: A neural network comprised of a \textbf{generator} (sampler: $\text{noise vector}\sim\calN(0,1)\to \text{data})$) and a \textbf{discriminator} (classifier: $\text{data}\to\{\text{clean},\text{generated}\}$):
   \BE{
     \min_G \max_D V(D,G)=\underbrace{\Ep{x\sim P_\text{data}(x)}{\log D(x)}}_{\text{training set}}+\underbrace{\Ep{z\sim P_z(x)}{\log(1-D(G(z)))}}_\text{generated data}
   }
@@ -785,7 +786,7 @@
     \item It is possible to train conditional GANs using only the state by training the discriminator on the state values or the transitions between adjacent states. This is useful when the action spaces of the expert and the agent are different. 
   }
 
-  \hl{\textbf{Generative Adversarial Reinforcement Learning (GAIL)}}: Using a conditional GAN to generate actions conditioned on states. This learning paradigm requires an environment.
+  \hl{\textbf{Generative Adversarial Reinforcement Learning (GAIL)}} \cite{ho2016generative}: Using a conditional GAN to generate actions conditioned on states. This learning paradigm requires an environment.
   \BA{
     \text{generator objective}&: \Ep{(s,a)\sim\pi_\theta}{-\log D_\phi(s,a)} \\
     \text{discriminator objective}&: \Ep{(s,a)\sim\text{demo}}{\log(1-D_\phi(s,a))}+\Ep{(s,a)\sim\pi_\theta}{\log D_\phi(s,a)}
@@ -804,7 +805,7 @@
     J_\text{BC}(\theta,\tau)=\Eb_{(s_t^j,a_t^j,g^j)\sim\tau} \bnm{a_t^j-\pi_\theta(s_t^j,g^j)}_2^2.
   }
 
-  \hl{\textbf{Goal Relabelling}}: Data augmentation for goal-conditioned reinforcement learning. For a data point of the form $(s_t^j,a_t^j,r_{t+1}^j,s_{t+1}^j,g^j)$ ($j$ is the trajectory label), we can relabel it $(s_t^j,a_t^j,r_{t+1}^j,s_{t+1}^j,g'=s^j_{t+k})$ (or some other way of sampling the goal).
+  \hl{\textbf{Goal Relabelling}} \cite{andrychowicz2017hindsight}: Data augmentation for goal-conditioned reinforcement learning. For a data point of the form $(s_t^j,a_t^j,r_{t+1}^j,s_{t+1}^j,g^j)$ ($j$ is the trajectory label), we can relabel it $(s_t^j,a_t^j,r_{t+1}^j,s_{t+1}^j,g'=s^j_{t+k})$ (or some other way of sampling the goal).
 
 
 \subsection{Diffusion Models}
@@ -841,7 +842,7 @@
   \item \textbf{prior} $p(z)$ is a constant Gaussian $p(\vbz)=\calN(\vbz;0,I)$. 
   }
 
-  \hl{\textbf{Variational Autoencoder (VAE)}}: A neural network with an encoder ($q_\phi(\vbz\mid\vbx)$) and a decoder ($p_\theta(\vbx\mid \vbz)$) that are trained in tandem.
+  \hl{\textbf{Variational Autoencoder (VAE)}} \cite{kingma2014auto}: A neural network with an encoder ($q_\phi(\vbz\mid\vbx)$) and a decoder ($p_\theta(\vbx\mid \vbz)$) that are trained in tandem.
   \BE{
     p(\vbx)\xrightarrow[\text{encoder}]{q_\phi(\vbz\mid \vbx)}p(\vbz)\xrightarrow[\text{decoder}]{p_\theta(\vbx\mid \vbz)}p_\theta(\vbx\mid \vbz)
   }
@@ -891,7 +892,14 @@
     &\geq \Ep{q_\phi(\vbx_{1:T}\mid \vbx_0)}{\log\f{p_\theta(\vbx_{0:T})}{q_\phi(\vbx_{1:T}\mid \vbz)}}
   }
 
-  \hl{\textbf{Diffusion Models}}: A generative model that allows for greater expressivity for generating conditional distributions (Figure \ref{fig:diffusion-comparison}). Diffusion Models are MHVAE where the latent dimension is equal to the data dimension, and encoder is fixed by hyperparameters s.t. the $x_T\sim\calN(0,1)$. Specifically,
+  \begin{figure}[h]
+    \centering
+    \includegraphics[width=0.90\textwidth]{figures/diffusion-comparison.png}
+    \caption{Figure 1 from \textit{Imitating Human Behaviour with Diffusion Models} by Pearce \textit{et. al.}}
+    \label{fig:diffusion-comparison}
+  \end{figure}
+
+  \hl{\textbf{Diffusion Models}} \cite{ho2020denoising}: A generative model that allows for greater expressivity for generating conditional distributions (Figure \ref{fig:diffusion-comparison}). Diffusion Models are MHVAE where the latent dimension is equal to the data dimension, and encoder is fixed by hyperparameters s.t. the $x_T\sim\calN(0,1)$. Specifically,
   \BA{
     q(\vbx_t\mid \vbx_{t-1})&=\calN(x_t;\sqrt{\alpha_t}\vbx_{t-1},(1-\alpha_t)I) \\
     p_\theta(\vbx_{t-1}\mid \vbx_t)&=\calN(\vbx_{t-1};\mu_\theta(x_t,t),\sigma_t^2I).
@@ -906,12 +914,6 @@
   \item Note that as $t\to\infty$, we have that $\overline{\alpha_t}\to 0$ so $q(\vbx_t\mid \vbx_0)\Rightarrow \calN(0,I)$.  
   }
 
-  \begin{figure}[h]
-    \centering
-    \includegraphics[width=0.90\textwidth]{figures/diffusion-comparison.png}
-    \caption{Figure 1 from \textit{Imitating Human Behaviour with Diffusion Models} by Pearce \textit{et. al.}}
-    \label{fig:diffusion-comparison}
-  \end{figure}
   \textbf{ELBO for Diffusion Models}: 
   \BA{
     \log p(\vbx)
@@ -1318,7 +1320,7 @@
   }
   where $a\sim G_\omega(s)$. Then, the target networks are soft-updated.
 
-  \textbf{Conservative Q Learning}: In conservative models, the estimated reward model $\hat{r}_\theta(x,a)$ is ``conservative'' in the sense that $\hat{r}_\theta(x,\overline{a})\leq r(x,\overline{a})$ on unseen actions. This loss is given by
+  \textbf{Conservative Q Learning \cite{kumar2020conservative}}: In conservative models, the estimated reward model $\hat{r}_\theta(x,a)$ is ``conservative'' in the sense that $\hat{r}_\theta(x,\overline{a})\leq r(x,\overline{a})$ on unseen actions. This loss is given by
   \BA{
     \min_\phi \max_\mu &\Eb_{(s,a,s')\sim\calD}\bpa{Q_\phi^\pi(s,a)-\bpa{r(s,a)+\gamma\Eb_{a'\sim\pi_\theta(\cdot\mid s')} Q_\phi^\pi(s',a')}}^2\\
                        &\quad +\alpha \Eb_{s\sim\calD,a\sim\mu(\cdot\mid s)} Q_\phi^\pi(s,a)-\alpha\Eb_{(s,a)\sim\calD} Q_\phi^\pi(s,a)+\Eb_{s\sim\calD}\calH(\mu(\cdot\mid s)),
@@ -1365,7 +1367,7 @@
   }
   This requires computing advantages $A(s,a)=Q(s,a)-V(s)$ without querying OOD actions.
 
-  \textbf{Advantage-Weighted Regression (AWR)}: Suppose the buffer is generated with some policy $\pi_\beta$. We can estimate the state-value function with Monte Carlo:
+  \textbf{Advantage-Weighted Regression (AWR) \cite{peng2019advantage}}: Suppose the buffer is generated with some policy $\pi_\beta$. We can estimate the state-value function with Monte Carlo:
   \BA{
     V^{\pi_\beta}(s)&:=\min_\phi \Eb_{s_t\sim\calD} \bnm{V^{\pi_\beta}_\phi(s_t)-\sum_{t'=t}^T r(s_{t'},a_{t'})}^2 \\
     A^{\pi_\beta}(s_t,a_t)&:=\sum_{t'=t}^T r(s_{t'},a_{t'})-V^{\pi_\beta}_\phi(s_t)
@@ -1424,7 +1426,7 @@
   }
   where $L_2^\tau(u)$ is $\tau u^2$ for $u\geq 0$ and $(1-\tau)u^2$ for $u<0$. The mean is equivalent to the $0.5$-expectile.
 
-  \textbf{Implicit Q Learning (IQL)}: We modify TD learning to use $L_2^\tau$:
+  \textbf{Implicit Q Learning (IQL) \cite{kostrikov2021offline}}: We modify TD learning to use $L_2^\tau$:
   \BA{
     V_\psi(s)&:=\argmin_{V} \Eb_{(s,a)\sim\calD} L_2^\lambda(V(s)-Q_\phi^\calD(s,a)) \\
     Q_\phi^\calD(s,a)&:=\argmin_Q \Eb_{(s,a,s')\sim\calD} \bpa{Q(s,a)-\bpa{r(s,a)+\gamma V_\psi(s')}}^2.
@@ -1535,7 +1537,7 @@
 
   \textbf{``Noisy-TV'' Problem}: The prediction error of the transition function is not necessary a useful signal for the \textbf{generalization gap} (high error on novel states unseen during training). Instead, the error may reflect the inherent stochasticity of the environment or limitations of the model representation.
 
-  \textbf{Random Network Distillation (RND)}: We use a synthetic prediction task for uncertainty estimation. Let $\hat{f}: \calS\to\bbR$ be a randomly initialized neural network. We train an identical neural network initialized independently, and use this to estimate uncertainty. This eliminates transition stochasticity because we model the observation space as a deterministic function of some latent variable (modeled by $s'$) and eliminates mode-mismatch because the predictor shares the same architecture.
+  \textbf{Random Network Distillation (RND) \cite{burda2019exploration}}: We use a synthetic prediction task for uncertainty estimation. Let $\hat{f}: \calS\to\bbR$ be a randomly initialized neural network. We train an identical neural network initialized independently, and use this to estimate uncertainty. This eliminates transition stochasticity because we model the observation space as a deterministic function of some latent variable (modeled by $s'$) and eliminates mode-mismatch because the predictor shares the same architecture.
 
   \textbf{Episodic Curiosity through Reachability}: Intrinsic rewards are estimated with a non-parametric memory structure populated with embeddings of past image observations. Curiosity reward uses a comparator neural network that takes as input two images and predicts whether they are temporally close (few actions apart). Specifically, each state is embedded and the neural network is trained with \textbf{temporal contrastive learning}:
   \BE{
@@ -1558,7 +1560,7 @@
 
   \textbf{Derailment problem}: Most reinforcement learinng algorithms perturb a promising policy and hope that it explores further. In most cases, however, this breaks the policy, especially as the length, complexity, and precision of the sequence increases.
 
-  \textbf{Go-Explore}: Addresses the detachment problem by explicitly tracking an archive of trajectories that reached a particular state in the world. This archive is updated with new states reached, shorter trajectories to reach already archived states, and updates to the \textbf{state connectivity map}. 
+  \textbf{Go-Explore \cite{ecoffet2021first}}: Addresses the detachment problem by explicitly tracking an archive of trajectories that reached a particular state in the world. This archive is updated with new states reached, shorter trajectories to reach already archived states, and updates to the \textbf{state connectivity map}. 
   \BI{
     \item
       This also addresses derailment by returning to prior states using known trajectories and then exploring. A trajectory is only made robust once it has been completely explored and identified as promising.
@@ -1569,6 +1571,67 @@
       \textbf{Learning Montezuma's Revenge from a Single Demonstration} uses a similar idea of using a model-free RL method to solve progressively longer suffixes of an expert trajectory to reduce reward sparsity. This is used to robustify an expert demonstration.
 
   }
+
+\section{Application of RL}
+
+\subsection{Training Diffusion Models with RL}
+
+  % about 1/2 - 1/3rd will come from reading paper and answer questions 
+  % 3hrs
+  % cummulative, but mostly second part
+  
+  \textbf{Diffusion Models with RL}: Consider we have a reward function over generated samples $\vbx_0$ and contexts $\vbc$. We are trying to optimize
+  \BE{
+    J_\text{DDRL}(\theta)=\Eb_{\vbc\sim p(\vbc),\vbx_0\sim p_\theta(\vbx_0\mid c)} r(\vbx_0,\vbc),
+  }
+  where $r$ may or may not be differentiable w.r.t. $\vbx_0$.
+  \BI{
+    \item
+      Examples of rewards include scoring aesthetics, text-alignment of generated images, or scoring trajectories obtained by an aciton diffusion policy.
+  }
+
+  \textbf{Reward-weighted Regression (RWR)}: Given a parametric policy $\pi_\theta(a\mid s)$, a dataset of episodes $\tau_i$, and the returns of each episod $R_i$, RWR solves
+  \BE{
+    \theta^*=\argmax_\theta \sum_{i=1}^N \sum_{t=1}^{T_i} w_i\log \pi_\theta(a_{i,t}\mid s_{i,t}),
+  }
+  where $w_i=\exp(\beta R_i)/\sum_{j} \exp(\beta R_j)$. This is similar to offline RL, except in diffusion models we do not have access to $\pi_\theta(a_{i,t}\mid s_{i,t})$. 
+
+  \textbf{Reward-Weighted Diffusion}: The weighted diffusion loss is given by:
+  % aligning text-to-image models using human feedback
+  \BE{
+    \calL_\text{RWR}(\theta)=\Eb_{(\vbx_0,\vbc)\sim p(\vbx_0,c),t\sim\calU[0,T],\vbx_t\sim q(\vbx_t\mid\vbx_0)}\bbb{w(\vbx_0,c)\Vert \boldsymbol{\tilde{\mu}}(\vbx_0,t)-\boldsymbol{\mu}(\vbx_0,t)}.
+  }
+  To approximate this, we collect human feedback and train a reward model via
+  \BE{
+    \calL^\text{MSE}(\phi)=\Eb_{(\vbx_0,\vbc,y)\sim\calD_\text{human}}(y-r_\phi(\vbx_0,c))^2.
+  }
+
+  \textbf{Denoising as a multi-step MDP}: We treat the process of denoising as a MDP where the state $s_t=(\vbc,t,\vbx_t)$, the action $a_t=\vbx_{t-1}$, and the policy $\pi(a_t\mid s_t)=p_\theta(\vbx _{t-1}\mid \vbx_t,c)$ (a Gaussian with fixed variance and parameterized mean). The initial state distribution $\rho_0(s_0)=(p(\vbc),\delta_T,\calN(\textbf{0},\vbI))$ and the dynamics are given by $P(s_{t+1}\mid s_t,a_t)=(\delta_\vbc,\delta_{t-1},\delta_{\vbx_{t-1}})$. Finally, the rewards are given by $R(s_t,a_t)=r(\vbx_0,\vbc)$ for $t=0$, and $0$ otherwise. This allows policy-gradients to apply as on standard Gaussian policies:
+  \BI{
+    \item
+      On-policy:
+      \BE{
+        \nabla_\theta J_\text{DDRL} 
+      }
+  }
+
+  \textbf{Text-image Alignment Reward}: Use a \textbf{visual language model (VLM)} as the reward function.
+
+\textbf{Diffusion Proximity Policy Optimization (DPPO)}: Environment rewards are only accessible for $k=0$ (the clean action):
+
+The contribution of noise steps ($k>0$) are down-weighted:
+
+
+  %% other papre FPO++
+
+  %% alignprop
+
+
+%% diffusion QL (back propogate Q function through action deoising chain)
+
+aoue
+
+
 
   \newpage
   \printbibliography
