@@ -1568,11 +1568,131 @@
   The second phase is to \textbf{robustify} the best trajectory using imitation learning on the best trajectory.
   \BI{
     \item
-      \textbf{Learning Montezuma's Revenge from a Single Demonstration} uses a similar idea of using a model-free RL method to solve progressively longer suffixes of an expert trajectory to reduce reward sparsity. This is used to robustify an expert demonstration.
+      \textbf{Learning Montezuma's Revenge from a Single Demonstration} \cite{salimans2018learning} a similar idea of using a model-free RL method to solve progressively longer suffixes of an expert trajectory to reduce reward sparsity. This is used to robustify an expert demonstration.
 
   }
 
 \section{Application of RL}
+
+\subsection{Foundation Models for RL}
+
+  \textbf{Extraction Action Plans from Language Models/Inner Monologue \cite{huang2022language,huang2022inner}}: One-shot/few-shot prompting can be used to decompose a task into several subtasks. Using pre-selected action decompositions, this allows an agent to complete complex tasks. This can be augemnted with a visual language model to dynamically adjust plans (e.g., if a certain subtask fails).
+
+  \textbf{Code as Policies \cite{liang2023code}}: Use language models to write Python code that composes API calls to assemble new robot behaviors for tasks. The API can be provided via examples in the prompt or using \textbf{retrieval-augmented generation (RAG)}.
+
+  \textbf{In-Context Abstraction Learning (ICAL) \cite{sarch2023open}}: Convertsr plans into programs of thought with human-in-the-loop and environment feedback. For each task that the agent attempts, humans provide feedback in natural language. The agent then rewrites the prompts with the new, updated task decomposition. This process is used to generate demonstrations for future tasks.
+  \BI{
+    \item Because the memory is effectively an ``expert'', a model provided with its own past demonstrations perform better than one seeded with human-designed demonstrations.
+    \item This can applied to tasks like visual web navigation, in addition to physical environment manipulation.
+  }
+
+  \textbf{Using LLMs to generate Reward Functions}: Reward functions for complex tasks can be encoded via language models, which enables standard RL algorithms such as PPO to learn complex tasks.
+
+  \textbf{Eureka \cite{ma2023eureka}}: Rewards for a task are iteratively refined by a language model based on task performance in a simulation environment.
+
+  \textbf{CLIP as a Reward Model \cite{rocamonde2023vision}}: A visual foundation model such as CLIP can be used as the reward function for an RL model. The VLM takes in two trajectories performed by the policy and is asked to rank them; this is then used as the preference label for the RL policy.
+
+  \begin{figure}[h]
+    \centering
+    \includegraphics[width=0.70\textwidth]{figures/vlm-as-reward.png}
+    \caption{Schematic of using visual language models for rewards for training a policy}
+    \label{fig:vlm-as-reward}
+  \end{figure}
+
+  \textbf{Dex4D \cite{kuang2026dex4d}}: Introduces the \textbf{Anypose-to-Anypose (AP2AP)} that abstracts dexterous manipulation as transforming an object from an abitrary initial 3D pose to an arbitrary target 3D pose, trained on 3,200 UniDexGrasp objects with diverse poses and domain randomization. Training uses a \textbf{paired point encoding} (encodes current and target positions, preserving point correspondence) and the teacher-student framework, where a privileged teacher policy is trained with PPO in simulation, and then a student policy is stilled with DAgger with partial observability (Figure \ref{fig:dex4d-teacher-student}). At test time, Dex4D uses a visual generation model to produce a future RDB video, starting from a language instruction an initial RGBD observation (depth generated separately using \textbf{Video Depth Anything}).
+
+  \begin{figure}[h]
+    \centering
+    \includegraphics[width=0.90\textwidth]{figures/dex4d-teacher-student.png}
+    \caption{Dex4D teacher-student training framework}
+    \label{fig:dex4d-teacher-student}
+  \end{figure}
+
+\subsection{RL for Foundation Models}
+
+  \textbf{Text Generation as an MDP}: For a prompt $x$ and token $y_1,\dots, y_t$, we represent state $s_t=(x,y_{<t})$, action $a_t=y_t$, and policy $\pi_theta(a_t\mid s_t)=\pi_\theta(y_t\mid x,y_{<t})$.
+
+  \textbf{Reinforcement Learning From Human Feedback (RLHF) \cite{ouyang2022training}}: We first train a reward model using supervised learning using explemary human demonstrations (learning tone, format, etc.). Specifically, the feedback comes as preferences over model samples $\calD=\bbr{x^{(i)},y_w^{(i)},y_\ell^{(i)}}$, corresponding to the prompt, preferred response, and dispreferred response, respectively. The \textbf{Bradley-Terry model} connects rewards to preferencs via
+  \BE{
+    p(y_w\succ y_\ell\mid x)=\sigma(r(x,y_w)-r(x,y_\ell)).
+  }
+  Thus, the reward model is trained via
+  \BE{
+    \calL_\calD(\phi)=-\Ep{(x,y_w,y_\ell)\sim\calD}{\log \sigma(r_\phi(x,y_w)-r_\phi(x,y_\ell))}
+  }
+  In practice, this is implemented as an LLM. Then, a pretrained LLM $\pi_\text{pretrained}$ is fine-tuned using SFT on a curated expert response dataset to $\pi_\text{SFT}$. Finally, the reward model $r_\phi$ is frozen and used to learn a policy $\pi_\theta$ via 
+  \BE{
+    \max_\theta \Ep{x\sim\calD,y\sim \pi_\theta(y\mid x)}{r_\phi(x,y)}-\beta \calD_\text{KL}\bpa{\pi_\theta(y\mid x)\Vert \pi_\text{ref}(y\mid x)}
+  }
+  This is implemented as a TRPO-style or PPO-style loss:
+  \BE{
+    \max_\theta \hat{\Eb} \sum_{t=1}^T \bpa{\f{\pi_\theta(y_t\mid x,y_{<t})}{\pi_\text{SFT}(y_t\mid x,y_{<t})}\hat{A_t}-\beta \calD_\text{KL}\bpa{\pi_\theta(y\mid x)\Vert \pi_\text{ref}(y\mid x)}}
+  }
+  The overall objective is visualized in Figure \ref{fig:rlhf}.
+
+  \begin{figure}[h]
+    \centering
+    \includegraphics[width=0.90\textwidth]{figures/rlhf.png}
+    \caption{Overall RLHF formulation}
+    \label{fig:rlhf}
+  \end{figure}
+
+
+  \textbf{Generalized Advantage Estimation (GAE)}: An advantage estimation method that is a weighted average of TD learning and Monte-Carlo. Specifically,
+  \BE{
+    \hat{A}_t^{\text{GAE}(\gamma,\delta)}=\sum_{i=0}^\infty (\gamma\delta)^i \delta_{t+i}
+  }
+  where $\delta_t=r_t+\gamma V(s_{t+1})-V(s_t)$ is the TD error. In particular, $\gamma=0$ gives TD(0) (low variance, high bias) and $gamma=1$ gives Monte Carlo (low bias, high variance).
+
+  \textbf{Direct Preference Optimization (DPO) \cite{rafailov2023direct}}: The closed-form optimal policy of the RLHF objective is given by 
+  \BE{
+    \pi^*(y\mid x)=\f{1}{Z(x)}\pi_\text{SFT}(y\mid x)\exp\bpa{\f{1}{\beta}r(x,y)},
+  }
+  where $Z(x)=\sum_y \pi_\text{SFT}(y\mid x)\exp\bpa{\f{1}{\beta}r(x,y)}$. See Advantage-Weighted Regression and Boltzmann Reweighting for details on this derivation. Solving the RLHF objective for the reward function yields 
+  \BE{
+    r(x,y)=\beta\log\f{\pi^*(y\mid x)}{\pi_\text{SFT}(y\mid x)}+\beta\log Z(x).
+  }
+  In particular, the ration $\pi^*(y\mid x)/\pi_\text{SFT}(y\mid x)$ is positive if the policy likes a response more than the reference model. Then, substituting into Bradley-Terry model-based loss function, we obtain the DPO loss:
+  \BE{
+    \calL_\text{DPO}(\pi_\theta;\pi_\text{SFT})=-\Eb_{(x,y_w,y_\ell)\sim\calD}\log\sigma\bpa{\underbrace{\beta\log\f{\pi_\theta(y_w\mid x)}{\pi_\text{SFT}(y_w\mid x)}}_\text{reward of preferred response}-\underbrace{\beta\log\f{\pi_\theta(y_\ell\mid x)}{\pi_\text{SFT}(y_\ell\mid x)}}_\text{reward of dispreferred response}}.
+  }
+  Thus, the implicit reward here is
+  \BE{
+    \hat{r}_\theta(x,y)=\beta\log \f{\pi_\theta(y\mid x)}{\pi_\text{SFT}(y\mid x)}.
+  }
+  The gradient of the loss is given by
+  \BE{
+    \nabla_\theta \calL_\text{DPO}(\pi_\theta;\pi_\text{SFT})=-\beta\Eb_{(x,y_w,y_\ell)\sim\calD}\sigma(\hat{r}_\theta(x,y_\ell)-\hat{r}_\theta(x,y_w))\bpa{\nabla_\theta\log \pi_\theta(y_w\mid x)-\nabla_\theta \log\pi_\theta(y_\ell\mid x)}.
+  }
+
+  \textbf{Group Relative Policy Optimization \cite{guo2025deepseek,shao2024deepseekmath}}: For a given prompt $x$, the policy model samples several outputs $y_1,\dots,y_G$, each of which is scored by a reward model yielding $r_1,\dots,r_G$. The advantage score of each answer is estimated relative to the group:
+  \BE{
+    A_i=\f{r_i-\text{mean}(r)}{\text{std}(r)}.
+  }
+  This allows GRPO to avoid learning the value model (used by GAE), as shown in Figure \ref{fig:grpo-vs-ppo}. The overall loss follows a PPO-style objective:
+  \BE{
+    \calL_\text{GRPO}(\theta)=\f{1}{N}\sum_{i=1}^N \min(r_\theta(\tau)A(\tau),\text{clip}(r_\theta(\tau),1-\epsilon,1+\epsilon)A(\tau))-\beta\calD_\text{KL}(\pi_\theta(\cdot\mid x)\Vert \pi_\text{SFT}(\cdot\mid x)).
+  }
+
+  \begin{figure}[h]
+    \centering
+    \includegraphics[width=0.70\textwidth]{figures/grpo-vs-ppo.png}
+    \caption{Comparison of computations done by GRPO vs PPO}
+    \label{fig:grpo-vs-ppo}
+  \end{figure}
+
+
+  \textbf{Chain-of-Thought Reasoning with RL in VLMs \cite{liu2025visual,lu2026ui,shao2024visual}}: Chain-of-thought reasoning in visual models in pure text-space is ineffective (<2 visual regions examined, little-to-no visually-grounded subgoal setting, verification, or backtracking). Grounded CoT associates thoughts produced by the language model with a location within the image of interest.
+
+  \textbf{Grounded RL for Visual Reasoning \cite{sarch2025grounded}}: The training data is warm-started using MCTS, using a strong teachem model (Qwen2.5-VL-72B) that samples grounded reasoning steps, keeping successful trajectories. Then, a smaller base VLM is fine-tuned using supervised learning on the curated trajectories. Finally, GRPO with task correctness as a reward is used to fine tune the SFT model. See Figure \ref{fig:vigorl}.
+
+
+  \begin{figure}[h]
+    \centering
+    \includegraphics[width=0.90\textwidth]{figures/vigorl.png}
+    \caption{Overview of the ViGoRL algorithm}
+    \label{fig:vigorl}
+  \end{figure}
 
 \subsection{Training Diffusion Models with RL}
 
@@ -1580,56 +1700,56 @@
   % 3hrs
   % cummulative, but mostly second part
   
-  \textbf{Diffusion Models with RL}: Consider we have a reward function over generated samples $\vbx_0$ and contexts $\vbc$. We are trying to optimize
-  \BE{
-    J_\text{DDRL}(\theta)=\Eb_{\vbc\sim p(\vbc),\vbx_0\sim p_\theta(\vbx_0\mid c)} r(\vbx_0,\vbc),
-  }
-  where $r$ may or may not be differentiable w.r.t. $\vbx_0$.
-  \BI{
-    \item
-      Examples of rewards include scoring aesthetics, text-alignment of generated images, or scoring trajectories obtained by an aciton diffusion policy.
-  }
+%   \textbf{Diffusion Models with RL}: Consider we have a reward function over generated samples $\vbx_0$ and contexts $\vbc$. We are trying to optimize
+%   \BE{
+%     J_\text{DDRL}(\theta)=\Eb_{\vbc\sim p(\vbc),\vbx_0\sim p_\theta(\vbx_0\mid c)} r(\vbx_0,\vbc),
+%   }
+%   where $r$ may or may not be differentiable w.r.t. $\vbx_0$.
+%   \BI{
+%     \item
+%       Examples of rewards include scoring aesthetics, text-alignment of generated images, or scoring trajectories obtained by an aciton diffusion policy.
+%   }
 
-  \textbf{Reward-weighted Regression (RWR)}: Given a parametric policy $\pi_\theta(a\mid s)$, a dataset of episodes $\tau_i$, and the returns of each episod $R_i$, RWR solves
-  \BE{
-    \theta^*=\argmax_\theta \sum_{i=1}^N \sum_{t=1}^{T_i} w_i\log \pi_\theta(a_{i,t}\mid s_{i,t}),
-  }
-  where $w_i=\exp(\beta R_i)/\sum_{j} \exp(\beta R_j)$. This is similar to offline RL, except in diffusion models we do not have access to $\pi_\theta(a_{i,t}\mid s_{i,t})$. 
+%   \textbf{Reward-weighted Regression (RWR)}: Given a parametric policy $\pi_\theta(a\mid s)$, a dataset of episodes $\tau_i$, and the returns of each episod $R_i$, RWR solves
+%   \BE{
+%     \theta^*=\argmax_\theta \sum_{i=1}^N \sum_{t=1}^{T_i} w_i\log \pi_\theta(a_{i,t}\mid s_{i,t}),
+%   }
+%   where $w_i=\exp(\beta R_i)/\sum_{j} \exp(\beta R_j)$. This is similar to offline RL, except in diffusion models we do not have access to $\pi_\theta(a_{i,t}\mid s_{i,t})$. 
 
-  \textbf{Reward-Weighted Diffusion}: The weighted diffusion loss is given by:
-  % aligning text-to-image models using human feedback
-  \BE{
-    \calL_\text{RWR}(\theta)=\Eb_{(\vbx_0,\vbc)\sim p(\vbx_0,c),t\sim\calU[0,T],\vbx_t\sim q(\vbx_t\mid\vbx_0)}\bbb{w(\vbx_0,c)\Vert \boldsymbol{\tilde{\mu}}(\vbx_0,t)-\boldsymbol{\mu}(\vbx_0,t)}.
-  }
-  To approximate this, we collect human feedback and train a reward model via
-  \BE{
-    \calL^\text{MSE}(\phi)=\Eb_{(\vbx_0,\vbc,y)\sim\calD_\text{human}}(y-r_\phi(\vbx_0,c))^2.
-  }
+%   \textbf{Reward-Weighted Diffusion}: The weighted diffusion loss is given by:
+%   % aligning text-to-image models using human feedback
+%   \BE{
+%     \calL_\text{RWR}(\theta)=\Eb_{(\vbx_0,\vbc)\sim p(\vbx_0,c),t\sim\calU[0,T],\vbx_t\sim q(\vbx_t\mid\vbx_0)}\bbb{w(\vbx_0,c)\Vert \boldsymbol{\tilde{\mu}}(\vbx_0,t)-\boldsymbol{\mu}(\vbx_0,t)}.
+%   }
+%   To approximate this, we collect human feedback and train a reward model via
+%   \BE{
+%     \calL^\text{MSE}(\phi)=\Eb_{(\vbx_0,\vbc,y)\sim\calD_\text{human}}(y-r_\phi(\vbx_0,c))^2.
+%   }
 
-  \textbf{Denoising as a multi-step MDP}: We treat the process of denoising as a MDP where the state $s_t=(\vbc,t,\vbx_t)$, the action $a_t=\vbx_{t-1}$, and the policy $\pi(a_t\mid s_t)=p_\theta(\vbx _{t-1}\mid \vbx_t,c)$ (a Gaussian with fixed variance and parameterized mean). The initial state distribution $\rho_0(s_0)=(p(\vbc),\delta_T,\calN(\textbf{0},\vbI))$ and the dynamics are given by $P(s_{t+1}\mid s_t,a_t)=(\delta_\vbc,\delta_{t-1},\delta_{\vbx_{t-1}})$. Finally, the rewards are given by $R(s_t,a_t)=r(\vbx_0,\vbc)$ for $t=0$, and $0$ otherwise. This allows policy-gradients to apply as on standard Gaussian policies:
-  \BI{
-    \item
-      On-policy:
-      \BE{
-        \nabla_\theta J_\text{DDRL} 
-      }
-  }
+%   \textbf{Denoising as a multi-step MDP}: We treat the process of denoising as a MDP where the state $s_t=(\vbc,t,\vbx_t)$, the action $a_t=\vbx_{t-1}$, and the policy $\pi(a_t\mid s_t)=p_\theta(\vbx _{t-1}\mid \vbx_t,c)$ (a Gaussian with fixed variance and parameterized mean). The initial state distribution $\rho_0(s_0)=(p(\vbc),\delta_T,\calN(\textbf{0},\vbI))$ and the dynamics are given by $P(s_{t+1}\mid s_t,a_t)=(\delta_\vbc,\delta_{t-1},\delta_{\vbx_{t-1}})$. Finally, the rewards are given by $R(s_t,a_t)=r(\vbx_0,\vbc)$ for $t=0$, and $0$ otherwise. This allows policy-gradients to apply as on standard Gaussian policies:
+%   \BI{
+%     \item
+%       On-policy:
+%       \BE{
+%         \nabla_\theta J_\text{DDRL} 
+%       }
+%   }
 
-  \textbf{Text-image Alignment Reward}: Use a \textbf{visual language model (VLM)} as the reward function.
+%   \textbf{Text-image Alignment Reward}: Use a \textbf{visual language model (VLM)} as the reward function.
 
-\textbf{Diffusion Proximity Policy Optimization (DPPO)}: Environment rewards are only accessible for $k=0$ (the clean action):
+% \textbf{Diffusion Proximity Policy Optimization (DPPO)}: Environment rewards are only accessible for $k=0$ (the clean action):
 
-The contribution of noise steps ($k>0$) are down-weighted:
-
-
-  %% other papre FPO++
-
-  %% alignprop
+% The contribution of noise steps ($k>0$) are down-weighted:
 
 
-%% diffusion QL (back propogate Q function through action deoising chain)
+%   %% other papre FPO++
 
-aoue
+%   %% alignprop
+
+
+% %% diffusion QL (back propogate Q function through action deoising chain)
+
+% aoue
 
 
 
