@@ -1,11 +1,10 @@
 \documentclass{article}
-\input{preamble}
 
 \usepackage{tikz}
 \usetikzlibrary{positioning,arrows.meta}
 
 \usepackage{color, soul}
-% \soulregister{\cite}{1}
+\soulregister{\cite}{1}
 
 \usepackage{pdflscape}
 \usepackage{booktabs}
@@ -18,6 +17,15 @@
    sortcites=true,
 ]{biblatex}
 \addbibresource{references.bib}
+
+\usepackage[
+   colorlinks=true,
+   citecolor=blue,
+   linkcolor=black,
+   urlcolor=blue,
+]{hyperref}
+
+\input{preamble}
 
 \begin{document}
 
@@ -1569,10 +1577,45 @@
   \BI{
     \item
       \textbf{Learning Montezuma's Revenge from a Single Demonstration} \cite{salimans2018learning} a similar idea of using a model-free RL method to solve progressively longer suffixes of an expert trajectory to reduce reward sparsity. This is used to robustify an expert demonstration.
-
   }
 
 \section{Application of RL}
+
+\subsection{Sim2Real Learning}
+
+  \textbf{Pros and Cons of Simulation in RL}: Simulations are necessary because they allow many samples in a safe, inexpensive environment while avoiding damage to a physical robot. However, simulations suffer from \textbf{under-modelling} (hard to replicate all mechanics of the real world), \textbf{incorrect parameters} (e.g., friction coefficient, textures, etc.), and systematic discrepencies in dynamics and observations.
+
+  \textbf{Domain Randomization \cite{tobin2017domain,tremblay2018training}}: Simulation environments are diversified by randomizing textures and camera viewpoints (Figure \ref{fig:domain-random}), allowing policies trained in such environments to generalize more effectively. 
+
+  \begin{figure}[h]
+    \centering
+    \includegraphics[width=0.70\textwidth]{figures/domain-random.png}
+    \caption{Examples of environments generated with domain randomization}
+    \label{fig:domain-random}
+  \end{figure}
+
+  \textbf{\textit{Solving Rubik's Cube with a robot hand} \cite{akkaya2019solving}}: The policy was trained entirely in simulation (MuJoCo) using automatic domain randomization, where the cube size, mass, friction coefficient, and visual texture are varied in simulation. The state (position, orientation, face positions) are estimated from camera angles. The overall design is shown in Figure \ref{fig:solving-rubiks-method}.
+
+  \begin{figure}[h]
+    \centering
+    \includegraphics[width=0.90\textwidth]{figures/solving-rubiks-method.png}
+    \caption{Architecture for RL policy used by \textit{Solving Rubik's Cube with a robot hand}}
+    \label{fig:solving-rubiks-method}
+  \end{figure}
+
+  \textbf{Automatic Domain Randomization (ADR)}: Uses a form of curriculum learning where the simulation environment parameters vary more and more from a baseline configuration as the training progresses. Specifically, ADR uses \textbf{boundary sampling} to evaluate the policy at boundary of seen paramaters. The distribution is then adjusted (either widened or narrowed) based on the performance of the policy.
+
+  \textbf{Rapid Motor Adaption \cite{kumar2021rma}}: Policy learns to walk in simulation on a series of randomized terrains and environment parameters. In training, these parameters are given and encoded into a vector $z_t$ with an encoder. During deployment, these are estimated online using previous state and actions.
+
+  \textbf{Combining Motion Tracking and Adaptibility \cite{zhang2025track}}: Uses a two-phase training pipeline. \textbf{AnyTracker} learns a general motion tracking policy in a simulator with no domain randomization (uses specialist-to-generalist training with DAgger). \textbf{AnyAdapter} uses history and a world model to update LoRA-style adaptors to adjust actions, without modifying the base tracker.
+
+  \begin{figure}[h]
+    \centering
+    \includegraphics[width=0.90\textwidth]{figures/any-tracker-adapter.png}
+    \caption{Two-phase RL training process for \textit{AnyTracker/AnyAdapter}}
+    \label{fig:any-tracker-adapter}
+  \end{figure}
+
 
 \subsection{Foundation Models for RL}
 
