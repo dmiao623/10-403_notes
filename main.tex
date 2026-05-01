@@ -1743,57 +1743,99 @@
   % 3hrs
   % cummulative, but mostly second part
   
-%   \textbf{Diffusion Models with RL}: Consider we have a reward function over generated samples $\vbx_0$ and contexts $\vbc$. We are trying to optimize
-%   \BE{
-%     J_\text{DDRL}(\theta)=\Eb_{\vbc\sim p(\vbc),\vbx_0\sim p_\theta(\vbx_0\mid c)} r(\vbx_0,\vbc),
-%   }
-%   where $r$ may or may not be differentiable w.r.t. $\vbx_0$.
-%   \BI{
-%     \item
-%       Examples of rewards include scoring aesthetics, text-alignment of generated images, or scoring trajectories obtained by an aciton diffusion policy.
-%   }
+  \textbf{Diffusion Models with RL}: Consider we have a reward function over generated samples $\vbx_0$ and contexts $\vbc$. We are trying to optimize
+  \BE{
+    J_\text{DDRL}(\theta)=\Eb_{\vbc\sim p(\vbc),\vbx_0\sim p_\theta(\vbx_0\mid c)} r(\vbx_0,\vbc),
+  }
+  where $r$ may or may not be differentiable w.r.t. $\vbx_0$.
+  \BI{
+    \item
+      Examples of rewards include scoring aesthetics, text-alignment of generated images, or scoring trajectories obtained by an aciton diffusion policy.
+  }
 
-%   \textbf{Reward-weighted Regression (RWR)}: Given a parametric policy $\pi_\theta(a\mid s)$, a dataset of episodes $\tau_i$, and the returns of each episod $R_i$, RWR solves
-%   \BE{
-%     \theta^*=\argmax_\theta \sum_{i=1}^N \sum_{t=1}^{T_i} w_i\log \pi_\theta(a_{i,t}\mid s_{i,t}),
-%   }
-%   where $w_i=\exp(\beta R_i)/\sum_{j} \exp(\beta R_j)$. This is similar to offline RL, except in diffusion models we do not have access to $\pi_\theta(a_{i,t}\mid s_{i,t})$. 
+  \textbf{Reward-weighted Regression (RWR)}: RWR trains a policy to imitate high-return episodes more strongly than low-return episodes. Specifically, given a parametric policy $\pi_\theta(a\mid s)$, a dataset of episodes $\tau_i$, and the returns of each episode $R_i$, RWR solves
+  \BE{
+    \theta^*=\argmax_\theta \sum_{i=1}^N \sum_{t=1}^{T_i} w_i\log \pi_\theta(a_{i,t}\mid s_{i,t}),
+  }
+  where $w_i=\exp(\beta R_i)/\sum_{j} \exp(\beta R_j)$. This is similar to offline RL, except in diffusion models we do not have access to $\pi_\theta(a_{i,t}\mid s_{i,t})$. The specific weight function can take many forms:
+  \BA{
+    w_\text{RWR}(\vbx_0,\vbc)&=\f{1}{Z}\exp(\beta r(\vbx_0,\vbc)) \\
+    w_\text{sparse}(\vbx_0,\vbc)&=\textbf{1}[r(\vbx_0,\vbc)\geq C]
+  }
+  The latter is similar to filtered behavior cloning.
 
-%   \textbf{Reward-Weighted Diffusion}: The weighted diffusion loss is given by:
-%   % aligning text-to-image models using human feedback
-%   \BE{
-%     \calL_\text{RWR}(\theta)=\Eb_{(\vbx_0,\vbc)\sim p(\vbx_0,c),t\sim\calU[0,T],\vbx_t\sim q(\vbx_t\mid\vbx_0)}\bbb{w(\vbx_0,c)\Vert \boldsymbol{\tilde{\mu}}(\vbx_0,t)-\boldsymbol{\mu}(\vbx_0,t)}.
-%   }
-%   To approximate this, we collect human feedback and train a reward model via
-%   \BE{
-%     \calL^\text{MSE}(\phi)=\Eb_{(\vbx_0,\vbc,y)\sim\calD_\text{human}}(y-r_\phi(\vbx_0,c))^2.
-%   }
+  \textbf{Reward-Weighted Diffusion \cite{lee2023aligning}}: This combined RWR with diffusion-denoising. The weighted diffusion loss is given by:
+  % aligning text-to-image models using human feedback
+  \BE{
+    \calL_\text{RWR}(\theta)=\Eb_{(\vbx_0,\vbc)\sim p(\vbx_0,c),t\sim\calU[0,T],\vbx_t\sim q(\vbx_t\mid\vbx_0)}\bbb{w(\vbx_0,c)\bnm{\boldsymbol{\tilde{\mu}}(\vbx_0,t)-\boldsymbol{\mu}_\theta(\vbx_0,t)}^2}.
+  }
+  To approximate this, we collect human feedback and train a reward model via
+  \BE{
+    \calL^\text{MSE}(\phi)=\Eb_{(\vbx_0,\vbc,y)\sim\calD_\text{human}}(y-r_\phi(\vbx_0,c))^2.
+  }
 
-%   \textbf{Denoising as a multi-step MDP}: We treat the process of denoising as a MDP where the state $s_t=(\vbc,t,\vbx_t)$, the action $a_t=\vbx_{t-1}$, and the policy $\pi(a_t\mid s_t)=p_\theta(\vbx _{t-1}\mid \vbx_t,c)$ (a Gaussian with fixed variance and parameterized mean). The initial state distribution $\rho_0(s_0)=(p(\vbc),\delta_T,\calN(\textbf{0},\vbI))$ and the dynamics are given by $P(s_{t+1}\mid s_t,a_t)=(\delta_\vbc,\delta_{t-1},\delta_{\vbx_{t-1}})$. Finally, the rewards are given by $R(s_t,a_t)=r(\vbx_0,\vbc)$ for $t=0$, and $0$ otherwise. This allows policy-gradients to apply as on standard Gaussian policies:
-%   \BI{
-%     \item
-%       On-policy:
-%       \BE{
-%         \nabla_\theta J_\text{DDRL} 
-%       }
-%   }
+  \textbf{Denoising as a multi-step MDP}: We treat the process of denoising as a MDP where the state $s_t=(\vbc,t,\vbx_t)$, the action $a_t=\vbx_{t-1}$, and the policy $\pi(a_t\mid s_t)=p_\theta(\vbx _{t-1}\mid \vbx_t,c)$ (a Gaussian with fixed variance and parameterized mean). The initial state distribution $\rho_0(s_0)=(p(\vbc),\delta_T,\calN(\textbf{0},\vbI))$ and the dynamics are given by $P(s_{t+1}\mid s_t,a_t)=(\delta_\vbc,\delta_{t-1},\delta_{\vbx_{t-1}})$. Finally, the rewards are given by $R(s_t,a_t)=r(\vbx_0,\vbc)$ for $t=0$, and $0$ otherwise. This allows policy-gradients to apply as on standard Gaussian policies:
+  \BE{
+    \nabla_\theta J_\text{DDRL}=\Eb \sum_{t=0}^T \nabla_\theta \log p_\theta(\vbx_{t-1}\mid \vbx_t,c)r(\vbx_0,c)
+  }
+  In particular, the $\log p_\theta(\vbx_{t-1}\mid \vbx_t,c)$ is a Gaussian policy. Recall that the gradient of a Gaussian policy is given by 
+  \BE{
+    \nabla_\theta\log\pi_\theta(a\mid s)=C\cdot\f{(a-\mu_\theta(s))}{\sigma^2}\nabla_\theta\mu_\theta(s)
+  }
+  where the variance $\sigma^2$ is fixed and $C$ is some constant.
 
-%   \textbf{Text-image Alignment Reward}: Use a \textbf{visual language model (VLM)} as the reward function.
+  \textbf{Off-Policy and PPO-style Denoising Losses}: Suppose we sample instead from a frozen model $p_\text{old}$. Define $\rho_t(\theta)=\f{p_\theta(\vbx_{t-1}\mid \vbx_t,\vbc)}{p_\text{old}(\vbx_{t-1}\mid \vbx_t,\vbc)}$. Then, the off-policy loss is given by
+  \BE{
+    \nabla_\theta J_\text{DDRL-IS}=\Eb_{\vbx_{T,\dots,0}\sim p_\text{old}} \sum_{t=0}^T \rho_t(\theta)\nabla_\theta \log p_\theta(\vbx_{t-1}\mid \vbx_t,c)r(\vbx_0,c)
+  }
+  With PPO-style trust region constraints, this becomes 
+  \BA{
+    J_\text{PPO-CLIP}&=\Eb_{\vbx_{T,\dots,0}\sim p_\text{old}} \sum_{t=0}^T \min(\rho_t(\theta) r(\vbx_0,\vbc), \text{clip}(\rho_t(\theta),1-\epsilon,1+\epsilon)r(\vbx_0,\vbc) \\
+    \nabla_\theta J_\text{PPO-CLIP}&=\Eb_{\vbx_{T,\dots,0}\sim p_\text{old}} \sum_{t=0}^T w_t^\text{clip}(\theta)\nabla_\theta \log p_\theta(\vbx_{t-1}\mid \vbx_t,c)A_t
+  }
 
-% \textbf{Diffusion Proximity Policy Optimization (DPPO)}: Environment rewards are only accessible for $k=0$ (the clean action):
+  \textbf{Diffusion Policy Policy Optimization (DPPO) \cite{ren2024diffusion}}: DPPO is a fine-tunining technique that operates on robot diffusion policies using PPO-style policy gradients, as opposed to treating the diffusion policy only as a behavior-cloned generator. Actions are denoised by a diffusion policy via $a_t^{(K)}\to a_t^{(K-1)}\to \cdots\to a_t^{(0)}$, and then $a_t=a_t^{(0)}$ is executed in the environment yielding a reward $r_t$ and transitioning to $s_{t+1}$. This frames an RL problem as a two-nested MDP:
+  \BA{
+    \overline{r}(\overline{s}_t,\overline{a}_t)&=\sum_{t'\geq t}\gamma^t_\text{env} \overline{r}(\overline{s}_{\overline{t}}(t',0),\overline{a}_{\overline{t}}(t',0)) \\
+    \hat{A}^{\pi_\text{old}}&= \gamma^k_\text{denoise} \bpa{\overline{r}(\overline{s}_t,\overline{a}_t)-\hat{V}^{\pi_\text{old}}(\overline{s}_t(t,0))} \\
+    \hat{V}^{\pi_\text{old}}(\overline{s}_t(t,0))&=\tilde{V}^{\pi_\text{old}}(s_t) \\
+    \nabla_\theta \Eb_{(s_t,a_t)\sim\pi_\text{old}} &\min\bpa{\hat{A}^{\pi_\text{old}}(s_t,a_t)\f{\pi_\theta(a_t\mid s_t)}{\pi_\text{old}(a_t\mid s_t)}, \hat{A}^{\pi_\text{old}}(s_t,a_t)\text{clip}\bpa{\f{\pi_\theta(a_t\mid s_t)}{\pi_\text{old}(a_t\mid s_t)},1-\epsilon,1+\epsilon}}
+  }
+  where $\overline{t}=\overline{t}(t,k)$. See Figure \ref{fig:dppo-algo}.
 
-% The contribution of noise steps ($k>0$) are down-weighted:
+  \begin{figure}[h]
+    \centering
+    \includegraphics[width=0.60\textwidth]{figures/dppo-algo.png}
+    \caption{DPPO Algorithm}
+    \label{fig:dppo-algo}
+  \end{figure}
+
+  \textbf{AlignProp \cite{prabhudesai2023aligning,prabhudesai2024video}}: Fine-tuning method for diffusion models that backpropogates the reward gradient through the diffusion sampling process. 
+  \BA{
+    \calL(\theta)&=-\Eb_{\vbc,\vbx_{T,\dots,0}\sim p_\theta} R(\vbx_0,\vbc) \\
+    \nabla_\theta\calL(\theta)&=-\pypx{R}{\vbx_0}\pypx{\vbx_0}{\theta},
+  }
+  where the second term is propogated through the entire denoising trajectory (similar to BPTT for an RNN).
+
+  \textbf{Diffusion-QL \cite{wang2022diffusion}}: Offline RL algorithm that learns actions that stay close to the offline dataset but prioritize ones with high learned Q-value. The loss is given by
+  \BE{
+    \calL_\text{actor}(\theta)=\calL_\text{diffusion}(\theta)-\alpha\Eb_{s\sim\calD,a^{(0)}\sim\pi_\theta(\cdot\mid s)} Q_\phi(s,a^{(0)})
+  }
+  where the first term is the diffusion BC loss and the second term is the $Q$-learning improvement term. The critic is trained like a standard actor critic method to minimize the squared difference between $y=r+\gamma Q_{\phi'}(s',a'^{(0)})$ and $Q_\phi(s,a)$, where $a'^{(0)}\sim\pi_{\theta'}(\cdot\mid s')$.
+
+  \textbf{Diffusion Steering via Reinforcement Learning (DSRL) \cite{wagenmaker2025steering}}: Given a frozen behavior-cloned diffusion policy $\pi_\text{dp}^w$, we train a new policy $\pi^\calW(w\mid s)$ that operates on the noise-space of $\pi_\text{dp}$. Actions are generated via $\pi_\text{dp}(\pi^\calW(\cdot \mid s))$. DSRL introduces two critics: $Q^\calA(s,a)$ is trained on action-space transitions $(s,a,r,s')$; $Q^\calW(s,w)$ is trained with distillation to approximate 
+  \BE{
+    Q^\calW(s,w)\approx Q^\calA(s,\pi_\text{dp}(s,w)).
+  }
+  The learned noise actor is optimized against $Q^\calW$. See Figure \ref{fig:dsrl-algo}.
 
 
-%   %% other papre FPO++
-
-%   %% alignprop
-
-
-% %% diffusion QL (back propogate Q function through action deoising chain)
-
-% aoue
-
+  \begin{figure}[h]
+    \centering
+    \includegraphics[width=0.60\textwidth]{figures/dsrl-algo.png}
+    \caption{DSRL Algorithm}
+    \label{fig:dsrl-algo}
+  \end{figure}
 
 
   \newpage
