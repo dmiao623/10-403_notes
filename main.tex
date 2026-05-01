@@ -1255,7 +1255,7 @@
   }
 
 \subsection{MBRL with Guided Diffusion}
-  \textbf{Diffuser \cite{janner2022planning}}: Each trajectory $\tau$ is formulated as a temporal image where one axis is time and the other is the state-action feature dimension.
+  \textbf{\hl{Diffuser} \cite{janner2022planning}}: Each trajectory $\tau$ is formulated as a temporal image where one axis is time and the other is the state-action feature dimension.
   \BE{
     \vbtau=\MP{s0 & s1 & \cdots & s_H \\ a_0 & a_1 & \cdots & a_{H-1}} \in\bbR^{H\times d}
   }
@@ -1310,12 +1310,18 @@
     \vbtau_k:= M\odot \vbtau_\text{cond} + (1-M)\odot\vbtau_k.
   }
 
-  \textbf{Diffusion-ES \cite{yang2024diffusiones}}: Standard ES requires a mutation operator, which is typically of the form $x'=x+\sigma\vbeps$, which likely deviates from the manifold of valid trajectories. Diffusion-ES instead partially noises the trajectories via
+  \textbf{\hl{Diffusion-ES} \cite{yang2024diffusiones}}: A test-time trajectory optimizer that operates on a frozen diffusion model and uses it in a n evolutionary search loop, without the need for reward gradients. Standard ES requires a mutation operator, which is typically of the form $x'=x+\sigma\vbeps$, which likely deviates from the manifold of valid trajectories. Diffusion-ES instead partially noises the trajectories via
   \BE{
-    \overline{x}=\sqrt{\overline{\alpha}_{n_k}}\vbx+\sqrt{1-\overline{\alpha}_{n_k}}\vbeps
+    \overline{\vbx}=\sqrt{\overline{\alpha}_{n_k}}\vbx+\sqrt{1-\overline{\alpha}_{n_k}}\vbeps
   }
-  for $\vbeps\sim\calN(0,\vbI)$ and then denoises via $x'\sim p_\theta(x\mid\overline{x})$.
+  for $\vbeps\sim\calN(0,\vbI)$ and then denoises via $x'\sim p_\theta(x\mid\overline{\vbx})$. In effect, this noises elite samples and projects them back into the data manifold. See Figure \ref{fig:diffusion-es}.
 
+  \begin{figure}[h]
+    \centering
+    \includegraphics[width=0.70\textwidth]{figures/diffusion-es.png}
+    \caption{Application of Diffusion-ES to autonomous driving}
+    \label{fig:diffusion-es}
+  \end{figure}
 
 \section{Offline Reinforcement Learning}
 
