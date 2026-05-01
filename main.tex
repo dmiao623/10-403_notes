@@ -1497,7 +1497,9 @@
       Methods for inducing curiosity-driven exploration include: using ensembles of $Q$ functions to model uncertainty, \textbf{state counting} to approximate distributions of sampled states, measuring \textbf{model prediction error}, and measuring \textbf{reachability} from already explored states.
   }
 
-  \textbf{Multi-armed Bandit Problem}: At each time step $t$, an agent chooses arm $k\in[K]$ and plays it, yielding reward $r_{k,t}\sim \calP_k$ where $\E{\calP_k}=\mu_k$. The distributions $\calP_k$ and means $\mu_k$ are unknown to the agent. The objective is to maximize the cumulative rewards, over a finite or infinite horizon.
+\subsection{Bandits}
+
+  \textbf{\hl{Multi-armed Bandit Problem}}: At each time step $t$, an agent chooses arm $k\in[K]$ and plays it, yielding reward $r_{k,t}\sim \calP_k$ where $\E{\calP_k}=\mu_k$. The distributions $\calP_k$ and means $\mu_k$ are unknown to the agent. The objective is to maximize the cumulative rewards, over a finite or infinite horizon. This is the simplest example of the \textbf{exploration-exploitation tradeoff}.
 
   \textbf{Action-Value}: The action-value for an action $a$ is its mean reward
   \BE{
@@ -1512,7 +1514,7 @@
       Then, if $a_t=a_t^*$, the agent is \textbf{exploiting}; otherwise, the agent is \textbf{exploring}.
   }
 
-  \textbf{Regret}: Let $\mu^*=\max_{a\in\mathcal{A}} \mu_a$ be the maximum expected mean reward. The cummulative regret up to time $t$ is defined as
+  \textbf{\hl{Regret}}: Let $\mu^*=\max_{a\in\mathcal{A}} \mu_a$ be the maximum expected mean reward. The cummulative regret up to time $t$ is defined as
   \BE{
     I_t=\sum_{i=1}^t \Delta_{a_i}=\sum_{i=1}^t (\mu^*-\mu_{a_t}).
   }
@@ -1521,7 +1523,7 @@
     \E{I_t}=\sum_{a\in\calA} \Delta_a\E{N_a(t)}.
   }
 
-  \textbf{Action-Value Estimates}: We focus on one action for simplicity. Suppose the rewards for the first $n-1$ timesteps are $r_1,\dots,r_{n-1}$. Then, the estimate is simply the mean:
+  \textbf{\hl{Action-Value Estimates}}: We focus on one action for simplicity. Suppose the rewards for the first $n-1$ timesteps are $r_1,\dots,r_{n-1}$. Then, the estimate is simply the mean:
   \BE{
     Q_n=\f{1}{n-1}(r_1+\cdots+r_{n-1}).
   }
@@ -1542,11 +1544,13 @@
   }
   implying that $I_t/t$ approaches a constant as $t\to\infty$.
 
+\subsection{Bayesian Exploration}
+
   \textbf{Bayesian Bandits}: Bayesian bandits compute the posterior distribution of rewards
   \BE{
     p\bbb{\calR\mid a_1,r_1,\dots,a_{t-1},r_{t-1}}.
   }
-  This is computed by specifying a prior $p(\calR)$ and applying Bayes' rule.
+  This is computed by specifying a prior $p(\calR)$ and applying Bayes' rule. In other words, instead of only maintaining a point estimate $Q_t(a)$, Bayesian bandits maintain a belief distribution over the unknown mean reward, allowing the agent to distinguish between two arms with the same empirical mean but different uncertainty.
 
   \textbf{Thompson Sampling}: At each time step, sample from the mean reward distributions:
   \BE{
@@ -1559,9 +1563,7 @@
       \BE{
         p(\theta_k)=\f{\Gamma(\alpha_k+\beta_k)}{\Gamma(\alpha_k)\Gamma(\beta_k)}\theta_k^{\alpha_k-1}(1-\theta_k)^{\beta_k-1}
       }
-      where $\Gamma(n)=(n-1)!$. This has mean $\alpha/(\alpha+\beta)$. The larger $\alpha+\beta$ is, the more concentrated the distribution is.
-
-      Because the beta distribution is the conjugate distribution for the Bernoulli distribution, the posterior is also the beta distribuotion. The closed form solution to the Bayesian update for $a_t=k$ is $(\alpha_k,\beta_k):=(\alpha_k+r_t,\beta_k+(1-r_t))$.
+      where $\Gamma(n)=(n-1)!$. This has mean $\alpha/(\alpha+\beta)$. The larger $\alpha+\beta$ is, the more concentrated the distribution is. Because the beta distribution is the conjugate distribution for the Bernoulli distribution, the posterior is also the beta distribution. The closed form solution to the Bayesian update for $a_t=k$ is $(\alpha_k,\beta_k):=(\alpha_k+r_t,\beta_k+(1-r_t))$.
 
     \item
       The distinction between a greedy bandit and a Thompson-sampled bandit is that the former has $\overline{\theta}_k:=\alpha_k/(\alpha_k+\beta_k)$ whereas the latter samples $\overline{\theta}_k\sim\text{beta}(\alpha_k,\beta_k)$.
@@ -1573,24 +1575,33 @@
       This can be done using \textbf{Bayesian neural networks} that estimate the posteriors, neural network ensembles (with or without a shared backbone), or ensembling by dropout (by randomly masking network weights to approximate an ensemble).
   }
 
-  \textbf{Exploration reward bonuses}: Intrinsic (task-independent) exploration can be insentivised by augmenting the task-dependent rewards $r(s,a,s')$ with an intrinsic reward. Note that the exploration reward bonuses are non-stationary.
+\subsection{Intrinsic Rewards}
 
-  \textbf{DeepHashing}: States (images) can be tabulated in latent compressed state (e.g., using an autoencoder). The intrinsic reward is then inversely proportion to the state visitation count.
-
-  \textbf{Model error as an intrinsic reward}: Let $T_\theta(s,a)$ denote the learned dynamics function to an embedding space, and $E_\phi(s)$ to be a state-embedding function in the same latent space. Then, we can use an intrinsic reward proportional to
+  \textbf{Exploration reward bonuses}: Intrinsic (task-independent) exploration can be insentivised by augmenting the task-dependent rewards $r(s,a,s')$ with an intrinsic reward:
   \BE{
-    \Eb_{(s,a,s')\sim\calD}\bnm{T_\theta(s,a)-E_\phi(s')}.
+    r_\text{total}=r_\text{extrinsic}+r_\text{intrinsic}.  
   }
-  We also add an inverse term $\text{Inv}_\psi$ to predict things that the agent can control:
+  Note that the exploration reward bonuses are non-stationary.
+
+  \textbf{Count-based exploration with DeepHashing \cite{tang2017exploration}}: In non-tabular environements, complex states such as images can be tabulated in latent compressed state (e.g., using an autoencoder). The intrinsic reward is then inversely proportion to the state visitation count:
   \BE{
-    \Eb_{(s,a,s')\sim\calD}\bnm{\text{Inv}_\psi (E_\phi(s),E_\phi(s'))-a}.
+    r_\text{intrinsic}(o)\propto 1/\sqrt{N(z)}
   }
 
-  \textbf{``Noisy-TV'' Problem}: The prediction error of the transition function is not necessary a useful signal for the \textbf{generalization gap} (high error on novel states unseen during training). Instead, the error may reflect the inherent stochasticity of the environment or limitations of the model representation.
+  \textbf{\hl{Model error as an intrinsic reward}}: Let $T_\theta(s,a)$ denote the learned dynamics function to an embedding space, and $E_\phi(s)$ to be a state-embedding function in the same latent space. Then, we can use an intrinsic reward proportional to
+  \BE{
+    r_\text{intrinsic}(s,a,s')=\bnm{T_\theta(s,a)-E_\phi(s')}^2.
+  }
+  To address the Noisy-TV problem, we introduce an inverse dynamics model $\text{Inv}_\psi$ to predict things that the agent can control:
+  \BE{
+    r_\text{intrinsic}=\bnm{\text{Inv}_\psi (E_\phi(s),E_\phi(s'))-a}^2.
+  }
+
+  \textbf{\hl{``Noisy-TV'' Problem}}: The prediction error of the transition function is not necessary a useful signal for the \textbf{generalization gap} (high error on novel states unseen during training). Instead, the error may reflect the inherent stochasticity of the environment (aleatoric uncertainty), epistemic uncertainty (agent lacks data) or limitations of the model representation.
 
   \textbf{Random Network Distillation (RND) \cite{burda2019exploration}}: We use a synthetic prediction task for uncertainty estimation. Let $\hat{f}: \calS\to\bbR$ be a randomly initialized neural network. We train an identical neural network initialized independently, and use this to estimate uncertainty. This eliminates transition stochasticity because we model the observation space as a deterministic function of some latent variable (modeled by $s'$) and eliminates mode-mismatch because the predictor shares the same architecture.
 
-  \textbf{Episodic Curiosity through Reachability}: Intrinsic rewards are estimated with a non-parametric memory structure populated with embeddings of past image observations. Curiosity reward uses a comparator neural network that takes as input two images and predicts whether they are temporally close (few actions apart). Specifically, each state is embedded and the neural network is trained with \textbf{temporal contrastive learning}:
+  \textbf{\hl{Episodic Curiosity through Reachability}}: Intrinsic rewards are estimated with a non-parametric memory structure populated with embeddings of past image observations. Curiosity reward uses a comparator neural network that takes as input two images and predicts whether they are temporally close (few actions apart). Specifically, each state is embedded and the neural network is trained with \textbf{temporal contrastive learning}:
   \BE{
     \calL_\phi(o,o^+,o^-)=\bnm{E_\phi(o)-E_\phi(o^+)}+\max(0,\gamma-\bnm{E_\phi(o)-E_\phi(o^-)}).
   }
@@ -1603,19 +1614,16 @@
       Each state is compared sequentially with every state in the buffer using the comparator neural network and scored according to the $90$-th percentile of closest state.
   }
 
-  \textbf{Detachment Problem}: In intrinsic-motivation exploration, suppose the environment has multiple promising regions with intrinsic reward. The agent starts exploring one region, consumes the novelty bonus there, and drifts away to another novel region. Once it has ``detached'' from the first region, the incentive gradient to back to the region has disappeared, so the region remains underexplored.
+  \textbf{\hl{Detachment Problem}}: In intrinsic-motivation exploration, suppose the environment has multiple promising regions with intrinsic reward. The agent starts exploring one region, consumes the novelty bonus there, and drifts away to another novel region. Once it has ``detached'' from the first region, the incentive gradient to back to the region has disappeared, so the region remains underexplored.
   \BI{
     \item
       Replay buffers should solve this in theory but fail in practice because the buffer size needs to be large, which causes optimization/stability issues.
   }
 
-  \textbf{Derailment problem}: Most reinforcement learinng algorithms perturb a promising policy and hope that it explores further. In most cases, however, this breaks the policy, especially as the length, complexity, and precision of the sequence increases.
+  \textbf{\hl{Derailment problem}}: Most reinforcement learinng algorithms perturb a promising policy and hope that it explores further. In most cases, however, this breaks the policy, especially as the length, complexity, and precision of the sequence increases.
 
-  \textbf{Go-Explore \cite{ecoffet2021first}}: Addresses the detachment problem by explicitly tracking an archive of trajectories that reached a particular state in the world. This archive is updated with new states reached, shorter trajectories to reach already archived states, and updates to the \textbf{state connectivity map}. 
-  \BI{
-    \item
-      This also addresses derailment by returning to prior states using known trajectories and then exploring. A trajectory is only made robust once it has been completely explored and identified as promising.
-  }
+  \textbf{\hl{Go-Explore} \cite{ecoffet2021first}}: Addresses the detachment problem by explicitly tracking an archive of trajectories that reached a particular state in the world. This archive is updated with new states reached, shorter trajectories to reach already archived states, and updates to the \textbf{state connectivity map}. This also addresses derailment by returning to prior states using known trajectories and then exploring. A trajectory is only made robust once it has been completely explored and identified as promising.
+  
   The second phase is to \textbf{robustify} the best trajectory using imitation learning on the best trajectory.
   \BI{
     \item
