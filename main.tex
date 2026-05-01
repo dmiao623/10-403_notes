@@ -772,6 +772,7 @@
   \textbf{Distribution Mismatch}: Distributions in training/test sets are different ($p_{\pi^*}(s_t)\neq p_{\pi_\theta}(s_t)$). Solutions are to use data augmentation (create synthetic data in simulation), augment data collection, or query experts for additional data points.
   \BI{
     \item Experts can be RL policies (e.g. trained using policy gradient methods) with access to privileged information.
+    \item Distribution mismatch can be solved using \textbf{DAgger}, where a policy repeatedly queries an expert on its current state distribution, instead of a static, clean state distribution.
   }
 
   \textbf{Data Multimodality}: Expert state-conditioned action distributions often do not follow a Gaussian distribution (e.g. steering angle around an obstacle). Least-squares regression on neural networks fail to handle this case correctly.
@@ -1061,6 +1062,8 @@
   }
 
 \section{Model-Based Reinforcement Learning}
+
+\section{MCTS-based Tree Search}
   
   \textbf{Online Planning}: Learning strategy where a model of the environment is rolled out to directly predict consequences of actions in order to search for the best actions to take in the current state.
   \BI{
@@ -1080,20 +1083,20 @@
 
   \textbf{Upper Confidence Bound (UCB)}: An alternative to $\epsilon$-greedy for balancing exploration and exploitation. The action selection is weighted by
   \BE{
-    w_t=\argmax_a Q_t(a)+c\sqrt{\f{\log t}{N_t(a)}}
+    a=\argmax_a Q_t(a)+c\sqrt{\f{\log t}{N_t(a)}}
   }
-  where $t$ is the number of times the parent node has been visited, $N_t(a)$ is the number of times the action has been tried. 
+  where $t$ is the number of times the parent node has been visited, $N_t(a)$ is the number of times the action has been tried. Actions with missing exploration bonus are treated as either having infinite bonus, expanded before applying UCB, or given a pseudocount.
 
   \textbf{Monte-Carlo Tree Search (MCTS)}: We maintain action values $Q$ for the root and nodes internal to a tree expanded through the course of the search. This is used to improve the simulation policy over time. Outside this tree, there are no $Q$ estimates and we fall back on a random policy. 
 
-  Formally, MCTS consists of a \textbf{bandit phase} and a \textbf{random phase}. If a node has an unexpanded child, we expand the child (adding it to the tree) and play it out using a random policy. Otherwise, sample a child using UCB and recurse. Each node tracks the number of visits and the average return. 
+  Formally, MCTS consists of a \textbf{bandit phase} and a \textbf{random phase}. If a node has an unexpanded child, we expand the child (adding it to the tree) and play it out using a random policy (or a more optimized policy). Otherwise, sample a child using UCB and recurse. Each node tracks the number of visits and the average return. 
 
-  \textbf{Offline MCTS \cite{guo2014deep}}: Uses MCTS for $Q$ value estimation and action selection at training time. A reactive policy network that imitates the MCTS planner is used at test time. The authors introduces two strategies:
+  \textbf{Offline MCTS \cite{guo2014deep}}: Uses MCTS for $Q$ value estimation and action selection at training time. A reactive policy network that imitates the MCTS planner is used at test time, since MCTS is too computationally expensive for real-time play. The authors introduce two strategies for training the reactive policy:
   \BI{
-  \item \texttt{UCTtoRegression}: A regression network that regresses to $Q(s,a,w)$ for all actions and selects actions by taking the argument max.
-  \item \texttt{UCTtoClassification}: A classifiaction network that, given the same context, directly predicts the best action.
+  \item \texttt{UCTtoRegression}: A regression network trained with MSE loss that regresses to $Q(s,a,w)$ for all actions, selecting actions by $\argmax_a Q(s,a,w)$.
+  \item \texttt{UCTtoClassification}: A classification network trained with cross-entropy loss that directly predicts $\argmax_a Q(s,a)$, the greedy MCTS action.
   }
-  The naive approach of generating $(s,a,Q(s,a))$ tuples is insufficient because the policy state distribution and the MCTS state distribution will diverge. Instead, the \textbf{interleaved method} alternates between deploying the learned $\epsilon$-greedy policy to collect trajectories, then uses MCTS as an expert to decide the best action for each state. Then, the learned policy is updated using the optimal actions. 
+  The naive approach of generating $(s,a,Q(s,a))$ tuples is insufficient because the policy state distribution and the MCTS state distribution will diverge (i.e., the learned policy visits different states than those used to generate training labels). Instead, the \textbf{interleaved method} (essentially \textbf{DAgger}) alternates between deploying the learned $\epsilon$-greedy policy to collect trajectories, then uses MCTS as an expert to decide the best action for each visited state. The learned policy is then updated using these expert-labeled actions, ensuring the training distribution matches the deployment distribution.
 
   \textbf{MCTS with Policy/Value Networks}: MCTS can be optimized by using a value network to evaluate board positions to prune the tree depth, and a policy networks to select moves and prune the tree breadth.
   \BI{
@@ -1106,7 +1109,7 @@
   \BE{
     a_t=\argmax_a Q(s_t,a)+c\sqrt{N(s_t)}\f{\pi_\theta(a_t\mid s_t)}{1+N(s_t,a_t)}
   }
-  where $\pi_\theta(a\mid s)$ is the prior expert probabilities provided by $p_\sigma$, $Q(s_r,a)$ is the average reward collected so far from MC simulations, and $N(s,a)$ is the number of times action $a$ has been taken in state $s$. A leaf node $L$ is evaluated as
+  where $\pi_\theta(a\mid s)$ is the prior expert probabilities provided by $p_\sigma$, $Q(s_t,a)$ is the average reward collected so far from MC simulations, and $N(s,a)$ is the number of times action $a$ has been taken in state $s$. A leaf node $L$ is evaluated as
   \BE{
     V(s_L)=(1-\lambda)V_\theta(s_L)+\lambda z_L
   }
@@ -1126,13 +1129,6 @@
       Note that the neural network has a single backbone that accepts a state input, and two heads that predict the action distribution and the value function.
     \item
       Similarly to AlphaGo, MCTS is still used a test-time. 
-  }
-
-\section{Model-Free Reinforcement Learning}
-  \textbf{Model-Free Reinforcement Learning}: Policy interacts with a learned model of the environement (dynamics $p(s_{t+1}\mid s_t,a_t)$ and $r(s_t,a_t)$ are simulated/learned). This can be done using neural networks, Gaussian processes, etc. 
-  \BI{
-  \item Models are useful for lookahead, such as MCTS, or used for synthetic experience generation that augments real experience to boost a model-free algorithm such as PPO.
-  \item Goal is to have high rewards with little interactions with the actual environment. 
   }
 
   \textbf{MBRL with Learned Models}: We first run the policy and update experience tuples dataset $\calD_\text{env}$. Then, the dynamics model is regressed to $\calD_\text{env}$:
