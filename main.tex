@@ -1319,7 +1319,7 @@
 
 \section{Offline Reinforcement Learning}
 
-  \textbf{Offline/Batch Reinforcement Learning}: Methods that learn from a fixed experience buffer $\calD=\bbr{(s_i,a_i,s_i',r_i)}_{i=1}^k$ of state-action-reward trajectories sampled from some unknown policy $\pi_\beta$. Note that the trajectories in the buffer may have high rewards or low rewards. The goal is to compute a policy $\pi_\theta$ s.t.
+  \textbf{\hl{Offline/Batch Reinforcement Learning}}: Methods that learn from a fixed experience buffer $\calD=\bbr{(s_i,a_i,s_i',r_i)}_{i=1}^k$ of state-action-reward trajectories sampled from some unknown policy $\pi_\beta$. Note that the trajectories in the buffer may have high rewards or low rewards. The goal is to compute a policy $\pi_\theta$ s.t.
   \BE{
     \max_\theta \Eb_{\tau\sim\pi_\theta}\sum_{t} r(s_t,a_t)
   }
@@ -1350,13 +1350,21 @@
   \BE{
     J(\theta)=\Ep{(s,a)\sim\calD}{-\lambda Q_\phi^{\pi_\theta}(s,\pi_\theta(s))+\bnm{\pi_\theta(s)-a}^2}
   }
-  with parameters $\lambda=\alpha/\Ep{\calD}{\bab{Q(s,a)}}$ and $\alpha=2.5$. 
+  with parameters $\lambda=\alpha/\Ep{\calD}{\bab{Q(s,a)}}$ and $\alpha=2.5$. The $Q_\phi$ function is learned with TD(0). 
 
-  \textbf{Batch-Constrained Q Learning (BCQ) \cite{fujimoto2019off}}: Constrain actions to only actions in the dataset, and only consider actions that are likely under the data distribution. This can be done with a generative model such as a conditional VAE or a diffusion model $G_\omega(a\mid s)$. Then, sample an action $a_i'\sim G_\omega(s)$ and take the action $a_i=a_i'+\xi_\phi(s,a)$ where $\xi_\phi$ adds a small perturbation near the dataset. The action taken is given by
+  \textbf{\hl{Batch-Constrained Q Learning (BCQ)} \cite{fujimoto2019off}}: Constrain actions to only actions in the dataset, and only consider actions that are likely under the data distribution. This can be done with a generative model such as a conditional VAE or a diffusion model $G_\omega(a\mid s)$. Then, sample an action $a_i'\sim G_\omega(s)$ and take the action $a_i=a_i'+\xi_\phi(s,a)$ where $\xi_\phi$ adds a small perturbation near the dataset. The action taken is given by
   \BE{
-    a^*=\argmax_i a_i.
+    a^*=\argmax_i Q(s,a_i).
   }
-  The Bellman backup is similar to that of the TD3:
+  Note that $G_\omega(s)$ does not use rewards from $\calD$. The $\xi_\phi$ network may be implemented as
+  \BE{
+    \xi_\phi(s,a)=\Phi \tanh(f_\phi(s,a))
+  }
+  and trained to maximize
+  \BE{
+    \Eb_{s\sim \calD,a\sim G_\omega(\cdot\mid r)} Q_{\theta_1}(s,a+\xi_\phi(s,a)).
+  }
+  The Bellman backup for updating $Q_\theta$ is similar to that of the TD3:
   \BA{
     y&=r+\gamma\max_{a_i}\bbb{\lambda \min_{j\in\bbr{1,2}} Q_{\overline{\theta}_j}(s', a_i)} \\
     \theta_j&:=\argmin_{\theta_j} \sum\bpa{Q_{\theta_j}(s,a)-y}^2 \\
@@ -1364,13 +1372,12 @@
   }
   where $a\sim G_\omega(s)$. Then, the target networks are soft-updated.
 
-  \textbf{Conservative Q Learning \cite{kumar2020conservative}}: In conservative models, the estimated reward model $\hat{r}_\theta(x,a)$ is ``conservative'' in the sense that $\hat{r}_\theta(x,\overline{a})\leq r(x,\overline{a})$ on unseen actions. This loss is given by
+  \textbf{\hl{Conservative Q Learning} \cite{kumar2020conservative}}: In conservative models, the estimated reward model $\hat{r}_\theta(x,a)$ is ``conservative'' in the sense that $\hat{r}_\theta(x,\overline{a})\leq r(x,\overline{a})$ on unseen actions. This loss is given by
   \BA{
-    \min_\phi \max_\mu &\Eb_{(s,a,s')\sim\calD}\bpa{Q_\phi^\pi(s,a)-\bpa{r(s,a)+\gamma\Eb_{a'\sim\pi_\theta(\cdot\mid s')} Q_\phi^\pi(s',a')}}^2\\
+    \min_\phi \max_\mu\quad &\Eb_{(s,a,s')\sim\calD}\bpa{Q_\phi^\pi(s,a)-\bpa{r(s,a)+\gamma\Eb_{a'\sim\pi_\theta(\cdot\mid s')} Q_\phi^\pi(s',a')}}^2\\
                        &\quad +\alpha \Eb_{s\sim\calD,a\sim\mu(\cdot\mid s)} Q_\phi^\pi(s,a)-\alpha\Eb_{(s,a)\sim\calD} Q_\phi^\pi(s,a)+\Eb_{s\sim\calD}\calH(\mu(\cdot\mid s)),
   }
-  where $\mu$ is an auxiliary action distribution to probe where the critic is assigning large values. The terms of the loss correspond to the standard TD learning critic update, increased loss for large $Q$-values, decreased loss for $Q$-values for in-dataset actions, and an regularization term to prevent $\mu$ from collapsing into a single argmax action.
-
+  where $\mu$ is an auxiliary action distribution to probe where the critic is assigning large values. The terms of the loss correspond to the standard TD learning critic update, increased loss for large Q values, decreased loss for Q values for in-dataset actions, and an regularization term to prevent $\mu$ from collapsing into a single argmax action.
   \BI{
     \item
       Consider finding
@@ -1387,7 +1394,7 @@
       }
       taking the log and rearranging yields
       \BA{
-        Q(s,a)&=\log\mu(a\mid s)+Z(s) \\
+        Q(s,a)&=\log\mu(a\mid s)+\log Z(s) \\
         \Eb_{a\sim\mu(\cdot\mid s)} Q(s,a)&=\Eb_{a\sim\mu(\cdot\mid s)}\log\mu(a\mid s)+\log Z(s).
       }
       Since the entropy term is exactly $\Eb_{a\sim\mu(\cdot\mid s)}\log\mu(a\mid s)$, the optimal distribution is simply
@@ -1395,7 +1402,7 @@
         Z(s)=\log\sum_a \exp Q(s, a)
       }
   }
-  The new expression becomes 
+  The new expression becomes the \textbf{conservative value-learning objective}:
   \BA{
     \min_\phi &\Eb_{(s,a,s')\sim\calD}\bpa{Q_\phi^\pi(s,a)-\bpa{r(s,a)+\gamma\Eb_{a'\sim\pi_\theta(\cdot\mid s')} Q_\phi^\pi(s',a')}}^2\\
               &\quad -\alpha\Eb_{(s,a)\sim\calD} Q_\phi^\pi(s,a)+\alpha\log\sum_{\overline{a}}\exp Q_\phi^\pi(s,\overline{a}).
@@ -1411,17 +1418,17 @@
   }
   This requires computing advantages $A(s,a)=Q(s,a)-V(s)$ without querying OOD actions.
 
-  \textbf{Advantage-Weighted Regression (AWR) \cite{peng2019advantage}}: Suppose the buffer is generated with some policy $\pi_\beta$. We can estimate the state-value function with Monte Carlo:
+  \textbf{\hl{Advantage-Weighted Regression (AWR)} \cite{peng2019advantage}}: Suppose the buffer is generated with some policy $\pi_\beta$. We can estimate the state-value function with Monte Carlo:
   \BA{
     V^{\pi_\beta}(s)&:=\min_\phi \Eb_{s_t\sim\calD} \bnm{V^{\pi_\beta}_\phi(s_t)-\sum_{t'=t}^T r(s_{t'},a_{t'})}^2 \\
-    A^{\pi_\beta}(s_t,a_t)&:=\sum_{t'=t}^T r(s_{t'},a_{t'})-V^{\pi_\beta}_\phi(s_t)
+    A^{\pi_\beta}(s_t,a_t)&:=\sum_{t'=t}^T r(s_{t'},a_{t'})-V^{\pi_\beta}_\phi(s_t)=G_t-V_\phi^{\pi_\beta}(s_t)
   }
   Then, we extract the policy
   \BE{
     \hat{\theta}:=
     \argmax_\theta \Ep{(s,a)\sim\calD}{\log\pi_\theta(a\mid s)\exp\bpa{\f{1}{\beta}A^{\pi_\beta}(s,a)}}.
   }
-  Here, $\beta$ is a parameter that controls the shapness of reweighting.
+  Here, $\beta$ is a parameter that controls the shapness of reweighting. AWR is useful because it avoids maximizing $Q(s,a)$ over arbitrary actions, and instead only fits the policy to actions that actually occurred in the dataset.
   \BI{
     \item
       This can be adapted to be an online off-policy algorithm by alternating between updating $\pi_\theta$ and augmenting the dataset via $\calD:=\calD\cup\bbr{\tau_i}$ sampled from $\pi_\theta$.
@@ -1468,9 +1475,9 @@
   \BE{
     \argmin_{m_\tau} \Eb_{x\sim X} L_2^\tau(x-m_\tau)
   }
-  where $L_2^\tau(u)$ is $\tau u^2$ for $u\geq 0$ and $(1-\tau)u^2$ for $u<0$. The mean is equivalent to the $0.5$-expectile.
+  where $L_2^\tau(u)$ is $\tau u^2$ for $u\geq 0$ and $(1-\tau)u^2$ for $u<0$. The mean is equivalent to the $0.5$-expectile. This is useful in offline RL because at a fixed state $s$, several dataset actions with different $Q(s,a)$ values may exist. The upper expectile of these values acts like a soft approximation to the best in-distribution action value.
 
-  \textbf{Implicit Q Learning (IQL) \cite{kostrikov2021offline}}: We modify TD learning to use $L_2^\tau$:
+  \textbf{\hl{Implicit Q Learning (IQL)} \cite{kostrikov2021offline}}: IQL avoids querying OOD actions entirely by learning a state-value function $V(s)$, approximated as the upper expectile of $Q(s,a)$ for $a\sim\calD(\cdot\mid s)$. We modify TD learning to use $L_2^\tau$:
   \BA{
     V_\psi(s)&:=\argmin_{V} \Eb_{(s,a)\sim\calD} L_2^\lambda(V(s)-Q_\phi^\calD(s,a)) \\
     Q_\phi^\calD(s,a)&:=\argmin_Q \Eb_{(s,a,s')\sim\calD} \bpa{Q(s,a)-\bpa{r(s,a)+\gamma V_\psi(s')}}^2.
