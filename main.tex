@@ -831,24 +831,19 @@
       but sampling directly yields poor results. 
   }
 
-
-  \hl{\textbf{Evidence Lower-Bound (ELBO)}}: Consider a stochastic generative model that learns another parameterized distribution $q_\phi(z\mid x)$. Then,
+  \hl{\textbf{Evidence Lower-Bound (ELBO)}}: Consider a stochastic generative model that learns another parameterized distribution $q_\phi(z\mid x)$ ($\int q_\phi(\vbz\mid\vbx)=1$). Then,
   \BA{
     \log p(\vbx)
     &=\log p(\vbx)\int q_\phi(\vbz\mid \vbx)\d \vbz \\
     &=\int q_\phi(\vbz\mid \vbx)\log p(\vbx)\d \vbz \\
     &=\Ep{q_\phi(\vbz\mid\vbx)}{\log p(\vbx)} \\
     &=\Ep{q_\phi(\vbz\mid\vbx)}{\log \f{p(\vbx,\vbz)}{q_\phi(\vbz\mid \vbx)})}+\Ep{q_\phi(\vbz\mid\vbx)}{\log \f{q_\phi(\vbz\mid \vbx)}{p(\vbz\mid \vbx)})} \\
-    &=\Ep{q_\phi(\vbz\mid\vbx)}{\log \f{p(\vbx,\vbz)}{q_\phi(\vbz\mid \vbx)})}+\calD_\text{KL}(q_\phi(\vbz\mid\vbx)\Vert p(\vbz)) \\
+    &=\Ep{q_\phi(\vbz\mid\vbx)}{\log \f{p(\vbx,\vbz)}{q_\phi(\vbz\mid \vbx)})}+\calD_\text{KL}(q_\phi(\vbz\mid\vbx)\Vert p(\vbz\mid \vbx)) \\
     &\geq \Ep{q_\phi(\vbz\mid\vbx)}{\log \f{p(\vbx,\vbz)}{q_\phi(\vbz\mid \vbx)})} \\
-    &= \Ep{q_\phi(\vbz\mid\vbx)}{\log p(\vbx\mid\vbz)}+\Ep{q_\phi(\vbz\mid\vbx)}{\log \f{p(\vbz)}{q_\phi(\vbz\mid \vbx)})} \\
-    &=\underbrace{\Ep{q_\phi(\vbz\mid\vbx)}{\log p(\vbx\mid\vbz)}}_\text{reconstruction term} + \underbrace{\calD_\text{KL}(q_\phi(\vbz\mid\vbx\Vert p(\vbz)))}_\text{prior matching term}.
+    &=\Ep{q_\phi(\vbz\mid\vbx)}{\log p(\vbx\mid\vbz)}+\Ep{q_\phi(\vbz\mid\vbx)}{\log \f{p(\vbz)}{q_\phi(\vbz\mid \vbx)})} \\
+    &=\underbrace{\Ep{q_\phi(\vbz\mid\vbx)}{\log p(\vbx\mid\vbz)}}_\text{reconstruction term} + \underbrace{\calD_\text{KL}(q_\phi(\vbz\mid\vbx)\Vert p(\vbz)))}_\text{prior matching term}.
   }
-  \BI{
-  \item \textbf{evidence}: the log-likelihood of observade data $p(\vbx)$.
-  \item \textbf{variational posterior}: the term $q_\phi(\vbz\mid\vbx)$ that parameterizes a multivariate Gaissian with diagonal covariance $q_\phi(z\mid x)=\calN(z;\mu_\phi(\vbx),\sigma^2_\phi(x)I)$.
-  \item \textbf{prior} $p(z)$ is a constant Gaussian $p(\vbz)=\calN(\vbz;0,I)$. 
-  }
+  We wish to learn the intermediate bottlenecked distribution $q_\phi(\vbz\mid \vbx)$ that \textbf{encodes} the data by transforming the input into a distribution over possible latents. The $p_\theta(\vbx\mid \vbz)$ parameter reverses this by \textbf{decoding} the latent vector into its observation. We choose to model the \textbf{evidence} as $p(z)=\calN(\vbz;\mathbf{0},\vbI)$ and $q_\phi(z\mid x)=\calN(\vbz;\vbmu_\phi(\vbx),\vbsigma^2_\phi(\vbx)\vbI)$.
 
   \hl{\textbf{Variational Autoencoder (VAE)}} \cite{kingma2014auto}: A neural network with an encoder ($q_\phi(\vbz\mid\vbx)$) and a decoder ($p_\theta(\vbx\mid \vbz)$) that are trained in tandem.
   \BE{
@@ -861,9 +856,9 @@
 
   \textbf{Reparameterization Trick}: We can transform the loss term
   \BE{
-    \Ep{q_\phi(\vbz\mid\vbx)}{\log p(\vbx\mid\vbz)}=\Ep{\epsilon\sim\calN(0,I)}{\log p_\theta(\vbx\mid \mu_\phi(\vbx)+\sigma_\phi(\vbx)\odot \epsilon)}
+    \Ep{q_\phi(\vbz\mid\vbx)}{\log p(\vbx\mid\vbz)}=\Ep{\epsilon\sim\calN(0,I)}{\log p_\theta(\vbx\mid \vbmu_\phi(\vbx)+\vbsigma_\phi(\vbx)\odot \vbeps)}
   }
-  which allow gradients to flow through the sampling step. 
+  where $\vbeps\sim\calN(\vbeps;\mathbf{0},\vbI)$ is provided as an input. This allows gradients to flow through the sampling step. 
 
   \textbf{Conditional VAEs}: VAEs that can generate conditional distributions over data; this can be done by supplying a state number $s$ to the encoder and decoder networks. 
 
@@ -872,7 +867,7 @@
     p_\theta(\vbx_{0:T})=p_\theta(x_T)\prod_{t=1}^T p_\theta(\vbx_{t-1}\mid\vbx_t)
   }
   and similarly for $q_\phi(\vbx_{0:T})$.
-
+  
   \begin{center}
     \begin{tikzpicture}[>=Stealth, node distance=2.0cm]
       \tikzset{state/.style={circle,draw,minimum size=9mm,inner sep=1pt}}
@@ -897,7 +892,8 @@
     \log p(\vbx_0)
     &=\log\int p_\theta(\vbx_{0:T})\d\vbx_{1:T} \\
     &=\log \Ep{q_\phi(\vbx_{1:T}\mid \vbx_0)}{\f{p_\theta(\vbx_{0:T})}{q_\phi(\vbx_{1:T}\mid \vbz)}} \\
-    &\geq \Ep{q_\phi(\vbx_{1:T}\mid \vbx_0)}{\log\f{p_\theta(\vbx_{0:T})}{q_\phi(\vbx_{1:T}\mid \vbz)}}
+    &\geq \Ep{q_\phi(\vbx_{1:T}\mid \vbx_0)}{\log\f{p_\theta(\vbx_{0:T})}{q_\phi(\vbx_{1:T}\mid \vbz)}} \\
+    &=\Ep{q_\phi(\vbx_{1:T}\mid \vbx_0}{\log\f{p(\vbz_T)p_\theta(\vbx\mid \vbz_1)\prod_{t=2}^T p_\theta(\vbz_{t-1}\mid \vbz)}{q_\phi(\vbz_1\mid\vbx)\prod_{t=2}^T q_\phi(\vbz_t\mid \vbz_{t-1})}}.
   }
 
   \begin{figure}[h]
@@ -914,7 +910,7 @@
   }
   Note that $\mu_\theta$ now takes in the step $t$ as an input.
   \BI{
-  \item Because the sum of Gaussian distributions is also Gaussian, we can derive tthat 
+  \item Because the sum of Gaussian distributions is also Gaussian, we can derive that 
     \BE{
       q(\vbx_t\mid \vbx_0)=\calN(\sqrt{\overline{\alpha_t}}\vbx_0,(1-\overline{\alpha_t})I)
     }
@@ -941,64 +937,123 @@
   }
   \BI{
   \item The \textbf{reconstruction term} is the same as the ELBO for VAEs given the first step latent.
-  \item The \textbf{prior matching term} has no trainable parameters and ensures that the final latent distribution matches the Gaussian prior.
-  \item The \textbf{consistency term} ensures that the distribution of $\vbx_t$ obtained from transitioning from noiser samples $\vbx_{t+1}$ matches the distribution over $\vbx_t$ obtained from noising cleaner samples $\vbx_{t-1}$ for all $t$. 
+  \item The \textbf{prior matching term} has no trainable parameters and ensures that the final latent distribution matches the Gaussian prior (since we assume that $p(\vbx_T)=\calN(\vbx_T;\mathbf{0};\vbI)$).
+  \item The \textbf{consistency term} ensures that the distribution of $\vbx_t$ obtained from transitioning from noiser samples $\vbx_{t+1}$ matches the distribution over $\vbx_t$ obtained from noising cleaner samples $\vbx_{t-1}$ for all $t$.
   }
+  In particular, note that the consistency term depends on both $\vbx_{t+1}$ and $\vbx_{t-1}$, which introduces high variance when we try to optimize with Monte-Carlo.
 
-  \textbf{ELBO for Diffusion Models Form 1}: We have that
+  \textbf{ELBO with Denoising Matching Term}: Because diffusion models are a subset of Markovian VAEs, we must have that $q(\vbx_t\mid \vbx_{t-1})=q(\vbx_t\mid\vbx_{t-1},\vbx_0)$, where the $\vbx_0$ term is superfluous due to the Markov property. Expanding with Bayes' rule, we get 
+  \BA{
+    q(\vbx_{t-1}\mid \vbx_t,\vbx_0)
+    &=\f{q(\vbx_t\mid \vbx_{t-1},\vbx_0)q(\vbx_{t-1}\mid \vbx_0)}{q(\vbx_t\mid \vbx_0)}. 
+  }
+  Substituting into the ELBO derivation, we get a \textbf{denoising matching term} of
+  \BE{
+    \sum_{t=2}^T \Eb_{q(\vbx_t\mid \vbx_0)} \calD_\text{KL} (q(\vbx_{t-1}\mid \vbx_t,\vbx_0)\Vert p_\theta(\vbx_{t-1}\mid \vbx)).
+  }
+  We can interpret the distirbution $q(\vbx_{t-1}\mid\vbx_t,\vbx_0)$ as the ground-truth signal because it defines how to denoise a noisy image $\vbx_t$ with access to the final, completely denoised image $\vbx_0$.
+
+  \textbf{ELBO by Predicting the Reconstructed Image}: We can derive the Gaussian parameterization of $q(\vbx_{t-1}\mid \vbx_t,\vbx_0)$ (given that the forms of $q(\vbx_t\mid \vbx_0)$ and $q(\vbx_{t-1}\mid \vbx_0)$ are known):
   \BA{
     q(\vbx_{t-1}\mid \vbx_t,\vbx_0)
     &=\f{q(\vbx_t\mid \vbx_{t-1},\vbx_0)q(\vbx_{t-1}\mid \vbx_0)}{q(\vbx_t\mid \vbx_0)} \\
     &=\f{\calN(\vbx_t;\sqrt{\alpha_t} \vbx_{t-1},(1-\alpha_t)\mathbf{I}))\calN(\vbx_{t-1};\sqrt{\overline{\alpha}_{t-1}}\vbx_0,(1-\overline{\alpha}_{t-1}\mathbf{I}))}{\calN(\vbx_t;\sqrt{\overline{\alpha}_t}\vbx_0,(1-\overline{\alpha}_t)\mathbf{I})} \\
     &\propto \calN\bpa{\vbx_{t-1};\f{\sqrt{\alpha_t}(1-\overline{\alpha}_{t-1})\vbx_t+\sqrt{\overline{\alpha}_{t-1}}(1-\alpha_t)\vbx_0}{1-\overline{\alpha}_t},\f{(1-\alpha_t)(1-\overline{\alpha}_{t-1})}{1-\overline{\alpha}_t}\mathbf{I}} \\
-    &=\calN(\mu_q(\vbx_t),\Sigma_q(t)), 
+    &=\calN(\vbmu_q(\vbx_t,\vbx_0),\vbSigma_q(t)). 
   }
-  so the prior matching term becomes 
+  We can write $\vbSigma_q(t)=\vbsigma^2q(t)\vbI$ where $\vbsigma^2_q(t)=\f{(1-\alpha_t)(1-\overline{\alpha}_{t-1})}{1-\overline{\alpha}_t}$. To match this term as well as possible, we parameterize the denoising transition step as a Gaussian. Then, the denoising matching term becomes
   \BA{
-    &\sum_{t=2}^{T} \Eb_{q(\vbx_t\mid\vbx_0)}\calD_\text{KL}(q(\vbx_t\mid \vbx_{t},\vbx_0)\Vert p_\theta(\vbx_{t-1}\mid \vbx_{t})) \\
-    &=\f{1}{2}\bbb{\log\f{\bab{\Sigma_y}}{\bab{\Sigma_x}}-d+\mathrm{tr}(\Sigma_y^{-1}\Sigma_x)+(\mu_y-\mu_x)^\top \Sigma_y^{-1}(\mu_y-\mu_x)} \\
-    &=\f{1}{2\sigma^2_q(t)}\bbb{\bnm{\mu_\theta-\mu_q}_2^2}
+    &\calD_\text{KL}(q(\vbx_{t-1}\mid \vbx_{t},\vbx_0)\Vert p_\theta(\vbx_{t-1}\mid \vbx_{t})) \\
+    &=\calD_\text{KL}(\calN(\vbx_{t-1};\vbmu_q,\vbSigma_q(t))\Vert\calD(\vbx_{t-1};\vbmu_\theta,\vbSigma_q(t)))\\
+    &=\f{1}{2}\bbb{\log\f{\bab{\vbSigma_y}}{\bab{\vbSigma_x}}-d+\mathrm{tr}(\vbSigma_y^{-1}\vbSigma_x)+(\vbmu_y-\vbmu_x)^\top \vbSigma_y^{-1}(\vbmu_y-\vbmu_x)} \\
+    &=\f{1}{2\vbsigma^2_q(t)}\bbb{\bnm{\vbmu_\theta-\vbmu_q}_2^2}
   }
-  where $\sigma_q^2(t)=\f{(1-\alpha_t)(1-\overline{\alpha}_{t-1})}{1-\overline{\alpha}_t}$ because the variances of both Gaussians match exactly. Here, $\mu_q(\vbx_t,\vbx_0)$ denotes the noised mean and $\mu_\theta(\vbx_t)$ denotes the denoised mean. The denoising transition mean can be rewritten as
+  Here, $\vbmu_q(\vbx_t,\vbx_0)$ denotes the noised mean and $\vbmu_\theta(\vbx_t)$ denotes the denoised mean. The denoising transition mean can be rewritten as
   \BE{
-    \mu_\theta(x_t,t)=\f{\sqrt{\alpha_t}(1-\overline{\alpha}_{t-1})\vbx_t+\sqrt{\overline{\alpha}_{t-1}}(1-\alpha_t)\hat{x}_\theta(\vbx_t,t)}{1-\overline{\alpha}_t},
+    \vbmu_\theta(\vbx_t,t)=\f{\sqrt{\alpha_t}(1-\overline{\alpha}_{t-1})\vbx_t+\sqrt{\overline{\alpha}_{t-1}}(1-\alpha_t)\hat{x}_\theta(\vbx_t,t)}{1-\overline{\alpha}_t},
   }
   so the overall consistency term can be written as
   \BE{
-    \argmin_\theta \Eb_{t\sim U[2,T]}\Ep{q(\vbx_t\mid \vbx_0)}{\f{1}{2\sigma^2_q(t)}\f{\overline{\alpha}_{t-1}(1-\alpha_t)^2}{(1-\overline{\alpha}_t)^2}\bnm{\hat{x}(\vbx_t,t)-\vbx_0}_2^2}.
+    \argmin_\theta \Eb_{t\sim U[2,T]}\Ep{q(\vbx_t\mid \vbx_0)}{\f{1}{2\sigma^2_q(t)}\f{\overline{\alpha}_{t-1}(1-\alpha_t)^2}{(1-\overline{\alpha}_t)^2}\bnm{\hat{\vbx}(\vbx_t,t)-\vbx_0}_2^2}.
   }
+  Thus, optimizing a diffusion models is equivalent to learning a neural network to predict the original ground truth image from an arbitrarily noisified version of it.
 
-  \textbf{ELBO for Diffusion Models Form 2}: Recall that
+  \textbf{ELBO by predicting Noise}: Recall that
   \BA{
     q(\vbx_t\mid \vbx_0)&=\calN{\vbx_t;\sqrt{\overline{\alpha}_t}\vbx_0,(1-\overline{\alpha}_t)\mathbf{I}} \\
-    \vbx_t&=\sqrt{\overline{\alpha}_t}\vbx_0+\sqrt{1-\overline{\alpha}_t}\vec{\epsilon}_0
+    \vbx_t&=\sqrt{\overline{\alpha}_t}\vbx_0+\sqrt{1-\overline{\alpha}_t}\vbeps_0
   }
   which gives that
   \BE{
-    \vbx_0=\f{\vbx_t-\sqrt{1-\overline{\alpha}_t}\vec{\epsilon}_0}{\sqrt{\overline{\alpha}_t}}.
+    \vbx_0=\f{\vbx_t-\sqrt{1-\overline{\alpha}_t}\vbeps_0}{\sqrt{\overline{\alpha}_t}}.
   }
   Then,
   \BA{
-    \vec{\mu}_q(\vbx_t,\vbx_0)
+    \vbmu_q(\vbx_t,\vbx_0)
     &=\f{\sqrt{\alpha_t}(1-\overline{\alpha}_{t-1})\vbx_t+\sqrt{\overline{\alpha}_{t-1}}(1-\alpha_t)\vbx_0}{1-\overline{\alpha}_t} \\
-    &=\f{\vbx_t}{\sqrt{\alpha_t}}-\f{1-\alpha_t}{\sqrt{1-\overline{\alpha}_t}\sqrt{\alpha_t}}\vec{\epsilon}_0.
+    &=\f{\vbx_t}{\sqrt{\alpha_t}}-\f{1-\alpha_t}{\sqrt{1-\overline{\alpha}_t}\sqrt{\alpha_t}}\vbeps_0.
   }
   Similarly, the denoising transition mean can be rewritten as
   \BE{
-    \vec{\mu}_\theta(\vbx_t,t)=\f{\vbx_t}{\sqrt{\alpha_t}}-\f{1-\alpha_t}{\sqrt{1-\overline{\alpha}_t}\sqrt{\alpha_t}}\hat{\epsilon}(\vbx_t,t).
+    \vbmu_\theta(\vbx_t,t)=\f{\vbx_t}{\sqrt{\alpha_t}}-\f{1-\alpha_t}{\sqrt{1-\overline{\alpha}_t}\sqrt{\alpha_t}}\hat{\epsilon}(\vbx_t,t).
   }
   Thus, the consistency term reduces to
   \BE{
-    \argmin_\theta \Eb_{t\sim U[2,T]}\Ep{q(\vbx_t\mid \vbx_0)}{\f{1}{2\sigma^2_q(t)}\f{(1-\alpha_t)^2}{(1-\overline{\alpha}_t)\alpha_t}\bnm{\vec{\epsilon}_0-\hat{\epsilon}_\theta(\vbx_t,t)}_2^2},
+    \argmin_\theta \Eb_{t\sim U[2,T]}\Ep{q(\vbx_t\mid \vbx_0)}{\f{1}{2\sigma^2_q(t)}\f{(1-\alpha_t)^2}{(1-\overline{\alpha}_t)\alpha_t}\bnm{\vbeps_0-\hat{\vbeps}_\theta(\vbx_t,t)}_2^2},
   }
   where $\epsilon_0\sim\calN(0,\mathbf{I})$ and $\hat{\epsilon}_\theta$ is a neural network parameterized by $\theta$ that predicts the noise level at step $t$. Training becomes performing gradient decent on
   \BE{
-    \nabla_\theta \bnm{\vec{\epsilon}-\hat{\epsilon}_\theta(\sqrt{\overline{\alpha}_t} \vbx_0+\sqrt{1-\overline{\alpha}_t}\vec{\epsilon},t)}_2^2,
+    \nabla_\theta \bnm{\vbeps-\hat{\vbeps}_\theta(\sqrt{\overline{\alpha}_t} \vbx_0+\sqrt{1-\overline{\alpha}_t}\vbeps,t)}_2^2,
   }
   a standard least-squares objective. Then, sampling can be performed by taking $\vbx_T,\vbz_1,\dots,\vbz_T\overset{\text{iid}}{\sim}\calN(0,\mathbf{I})$ and setting
   \BE{
-    \vbx_{t-1}=\f{1}{\sqrt{\alpha_t}}\bpa{\vbx_t-\f{1-\alpha_t}{\sqrt{1-\overline{\alpha}_t}}\vec{\epsilon}_\theta(\vbx_t,t)}+\sigma_t\vbz
+    \vbx_{t-1}=\f{1}{\sqrt{\alpha_t}}\bpa{\vbx_t-\f{1-\alpha_t}{\sqrt{1-\overline{\alpha}_t}}\vbeps_\theta(\vbx_t,t)}+\sigma_t\vbz
   }
+
+  \textbf{Score function}: The score function of a distribution is given by $\nabla_{\vbx} \log p(\vbx)$. This defines a vector field over the entire data space, and performing gradient ascent on this field leads to data modes.
+
+  \textbf{Tweedie's Formula}: For a Gaussian variable $\vbz\sim\calN(\mu_{\vbz},\Sigma_{\vbz})$, we have that
+  \BE{
+    \Ec{\vbmu_{\vbz}}{\vbz}=\vbz+\Sigma_{\vbz}+\nabla_{\vbz}\log p(\vbz).
+  }
+
+  \textbf{ELBO by predicting score}: Tweedie's formula enables the prediction of the true posterior mean $\vbx_t$ given its samples. Given that
+    \BE{
+      q(\vbx_t\mid \vbx_0)=\calN(\vbx_t;\sqrt{\overline{\alpha_t}\vbx_0,(1-\overline{\alpha}_t\vbI)}),
+    }
+    we have that 
+    \BE{
+      \Ec{\vbmu_{\vbx_t}\mid \vbx_t}=\vbx_t+(1-\overline{\alpha}_t)\nabla_{\vbx_t}\log p(\vbx_t).
+    }
+    Since $\vbmu_{\vbx_t}=\sqrt{\overline{\alpha}_t}\vbx_0$, we have that
+    \BE{
+      \vbx_0=\f{\vbx_t+(1-\overline{\alpha}_t)\nabla \log p(\vbx_t)}{\sqrt{\overline{\alpha}_t}}.
+    }
+    We can plug this into the ground-truth denoising transition mean $\vbmu_q(\vbx_t,\vbx_0)$ which yields
+    \BA{
+      \vbmu_q(\vbx_t,\vbx_0)
+      &=\f{\sqrt{\alpha_t}(1-\overline{\alpha}_{t-1})\vbx_t+\sqrt{\overline{\alpha}_{t-1}}(1-\alpha_t)\vbx_0}{1-\overline{\alpha}_t} \\
+      &=\f{\sqrt{\alpha_t}(1-\overline{\alpha}_{t-1})\vbx_t+\sqrt{\overline{\alpha}_{t-1}}(1-\alpha_t)\f{\vbx_t+(1-\overline{\alpha}_t)\nabla \log p(\vbx_t)}{\sqrt{\overline{\alpha}_t}}}{1-\overline{\alpha}_t} \\
+      &=\f{1}{\sqrt{\alpha_t}}\vbx_t+\f{1-\alpha_t}{\sqrt{\alpha_t}}\nabla\log p(\vbx_t).
+    }
+    Then, the approximate denoising transition mean is given by
+    \BE{
+      \vbmu_\theta(\vbx_t,t)=\f{1}{\sqrt{\alpha_t}}\vbx_t+\f{1-\alpha_t}{\sqrt{\alpha_t}}s_\theta(\vbx_t,t).
+    }
+    Here, $s_\theta(\vbx_t,t)$ is a neural network that learns to predict the score function, which is the gradient of $\vbx_t$ in data space for an arbitrary noise level $t$. This makes the overall optimization problem reduce to 
+    \BE{
+      \argmin_\theta \Eb_{t\sim U[2,T]}\Ep{q(\vbx_t\mid \vbx_0)}{\f{1}{2\sigma^2_q(t)}\f{(1-\alpha_t)^2}{\alpha_t}\bnm{\vbs_\theta(\vbx_t,t)-\nabla_{\vbx_t}\log p(\vbx_t)}}.
+    }
+    We also have that for some $\mathbf{\epsilon}_0\sim\calN(0,\vbI)$, that
+    \BE{
+      \vbx_t=\sqrt{\overline{\alpha}_t}\vbx_0+\sqrt{1-\overline{\alpha}_t}\mathbf{\epsilon}_0.
+    }
+    Solving for $\vbx_0$ and equating the two expressions gives a score function of
+    \BE{
+      \nabla\log p(\vbx_t)=-\f{1}{\sqrt{1-\overline{\alpha}_t}}\mathbf{\epsilon}_0.
+    }
+    Since this is the direction in the data space to add noise to the image, we move in the opposite direction to increase the log probability.
+
 
   \textbf{Conditional Diffusion Models}: Conditional diffusion models add arbitrary conditioning information $y$ at each transition step:
   \BE{
@@ -1200,35 +1255,39 @@
   }
 
 \subsection{MBRL with Guided Diffusion}
-
-  \textbf{Score function}: The score function of a distribution is given by $\nabla_{\vbx} \log p(\vbx)$. This defines a vector field over the entire data space, and performing gradient ascent on this field leads to data modes.
-
-  \textbf{Tweedie's Formula}: For a Gaussian variable $\vbz\sim\calN(\mu_{\vbz},\Sigma_{\vbz})$, we have that
+  \textbf{Diffuser \cite{janner2022planning}}: Each trajectory $\tau$ is formulated as a temporal image where one axis is time and the other is the state-action feature dimension.
   \BE{
-    \Ec{\vec{\mu}_{\vbz}}{\vbz}=\vbz+\Sigma_{\vbz}+\nabla_{\vbz}\log p(\vbz).
+    \vbtau=\MP{s0 & s1 & \cdots & s_H \\ a_0 & a_1 & \cdots & a_{H-1}} \in\bbR^{H\times d}
   }
+  where $d=d_s+d_a$ is the dimension of the concactenated feature and action space. The forward noising process is a standard DDPM applied to entire trajectories:
+  \BE{
+    q(\tau_k\mid \vbtau_{k-1})=\calN(\vbtau_k;\sqrt{\alpha_k}\vbtau_{k-1},(1-\alpha_k)\vbI).
+  }
+  The loss is given by
+  \BE{
+    \calL(\theta)=\Eb_{\vbtau_0\sim\calD,\vbeps\sim\calN(0,\vbI)} \bnm{\vbeps-\hat{\vbeps}_\theta(\sqrt{\overline{\alpha}_k}\vbtau_0+\sqrt{1-\overline{\alpha}_k}\vbeps,k)}.
+  }
+  In practice, $\hat{\vbeps}_\theta$ is implemented as a 1-D convolutional neural network to preserve temporal invariance.
 
-  \textbf{Predicting the Score with Diffusion Models}: Tweedie's formula enables the prediction of the true posterior mean $\vbx_t$ given its samples. Given that
-    \BE{
-      q(\vbx_t\mid \vbx_0)=\calN(\vbx_t;\sqrt{\overline{\alpha_t}\vbx_0,(1-\overline{\alpha}_t\vbI)}),
-    }
-    we have that 
-    \BE{
-      \Ec{\mathbf{\mu}_{\vbx_t}\mid \vbx_t}=\vbx_t+(1-\overline{\alpha}_t)\nabla_{\vbx_t}\log p(\vbx_t).
-    }
-    Since $\mathbf{\mu}_{\vbx_t}=\sqrt{\overline{\alpha}_t}\vbx_0$, we have that
-    \BE{
-      \vbx_0=\f{\vbx_t+(1-\overline{\alpha}_t)\nabla \log p(\vbx_t)}{\sqrt{\overline{\alpha}_t}}.
-    }
-    We also have that for some $\mathbf{\epsilon}_0\sim\calN(0,\vbI)$, that
-    \BE{
-      \vbx_t=\sqrt{\overline{\alpha}_t}\vbx_0+\sqrt{1-\overline{\alpha}_t}\mathbf{\epsilon}_0.
-    }
-    Solving for $\vbx_0$ and equating the two expressions gives a score function of
-    \BE{
-      \nabla\log p(\vbx_t)=-\f{1}{\sqrt{1-\overline{\alpha}_t}}\mathbf{\epsilon}_0.
-    }
-    Since this is the direction in the data space to add noise to the image, we move in the opposite direction to increase the log probability. Note that at generation time, we approximate $\mathbf{\epsilon}_0$ with $\epsilon_\theta(\vbx_t,t)$.
+  For plannin,g a guidance function $J(\tau)$ is used to model predicted return, negative cost, goal satisfaction, or constraint satisfaction. We have that
+  \BE{
+    \tilde{p}_\theta(\vbtau)\propto p_\theta(\vbtau) h(\vbtau),
+  }
+  where $h(\vbtau)=exp(\eta J(\vbtau))$. Taking the log-gradient, this yields
+  \BE{
+    \nabla_{\vbtau} \log\tilde{p}(\vbtau)=\nabla_{\vbtau} \log p_\theta(\tau)+\eta\nabla_{\vbtau} J(\vbtau).
+  }
+  Here, $p_\theta$ supplies the trajectory prior, while the guide supplies reward- or constrained-directed gradients. Accounting for the constraints, the diffusion sampler becomes 
+  \BE{
+    \vbtau_{k-1}\sim\calN(\vbtau_{k-1}; \vbmu_\theta(\vbtau_k,k)+\lambda\vbSigma_k\nabla_{\vbtau} J(\vbtau),\vbSigma_k).
+  }
+  We combine this with goal in-painting to implement goal-conditioned planning. The generation process is given by
+  \BA{
+    \vbx_{0\mid t}&=\f{1}{\sqrt{\overline{\alpha}_t}}\bpa{\vbx_t-\sqrt{1-\overline{\alpha}_t}\epsilon_\theta(\vbx_t,t)} \\
+    \vbx_{0\mid t}^\text{guided}&=\vbx_{0\mid t}+c_t\nabla_{\vbx_{0\mid t}}r(\vbx_{0\mid t}) \\
+    \vbx_{t-1}&=\sqrt{\overline{\alpha}_{t-1}}\vbx_{0\mid t}^\text{guided}+\sqrt{1-\overline{\alpha}_{t-1}-\sigma_t^2}\vbeps_\theta(\vbx_t,t)+\vbsigma_t\vbeps
+  }
+  Note that the roward function $r$ here needs to be both diffentiable and trained on both unnoised/noised trajectories.
 
   \textbf{Conditional Diffusion Generation}: Suppose we then try to condition the generation process on some data $y$. We have that
   \BA{
@@ -1246,39 +1305,16 @@
         \nabla_\vbx \log p_\gamma(\vbx\mid y)=\nabla_\vbx\log p(\vbx)+\gamma\nabla_\vbx\log p(y\mid\vbx).
       }
   }
-
-  \textbf{Model-based RL with Diffusion Models}: We represent trajectories as sing-channel images and train a diffusion model to iteratively denoise the entire trajectory. Sampling is done by iteratively refining randomly-initialized trajectories.
-  \BI{
-    \item
-      Such a diffuser is implemented with one-dimensional convolutions for temporal equivariance and horizon independence.
-    \item
-      Note that prediction is \textbf{non-autoregressive} since the entire trajectory is predicted simultaneously.
-  }
-  The trajectory is then guided with learned value/cost functions:
+  \textbf{Goal Planning through Inpainting}: Suppose the guidance function specifies only the initial and goal states. Then, a straightforward method is to substitute $s_0^{(t)}$ and $s_n^{(t)}$ with the initial and goal states, respectively, at each denoising time step. Formally, if $M$ is a binary mask over the trajectory array where $M=1$ on constrained entries and $0$ elsewhere, then 
   \BE{
-    \tilde{p}_\theta(\boldsymbol{\tau})\propto p_\theta(\boldsymbol{\tau}) h(\boldsymbol{\tau}),
+    \vbtau_k:= M\odot \vbtau_\text{cond} + (1-M)\odot\vbtau_k.
   }
-  corresponding to the behavior model, the diffusion model, and the guidance function, respectively.
 
-  \textbf{Goal Planning through Inpainting}: Suppose the guidance function specifies only the initial and goal states. Then, a straightforward method is to substitute $s_0^{(t)}$ and $s_n^{(t)}$ with the initial and goal states, respectively, at each denoising time step.
-
-  \textbf{Model-based Control with Generative Trajectory Models}: First, we train a diffusion model by minimizing the MSE between predicted and true noised trajectory:
+  \textbf{Diffusion-ES \cite{yang2024diffusiones}}: Standard ES requires a mutation operator, which is typically of the form $x'=x+\sigma\vbeps$, which likely deviates from the manifold of valid trajectories. Diffusion-ES instead partially noises the trajectories via
   \BE{
-    \argmin_\theta \calL(\theta)=\bab{\epsilon_\theta(\vbx_t,t)-\epsilon_t}^2.
+    \overline{x}=\sqrt{\overline{\alpha}_{n_k}}\vbx+\sqrt{1-\overline{\alpha}_{n_k}}\vbeps
   }
-  Then, generation is preformed by sampling $\vbx_T\sim\calN(0,\vbI)$ and performing:
-  \BA{
-    \vbx_{0\mid t}&=\f{1}{\sqrt{\overline{\alpha}_t}}\bpa{\vbx_t-\sqrt{1-\overline{\alpha}_t}\epsilon_\theta(\vbx_t,t)} \\
-    \vbx_{0\mid t}^\text{guided}&=\vbx_{0\mid t}+c_t\nabla_{\vbx_{0\mid t}}r(\vbx_{0\mid t}) \\
-    \vbx_{t-1}&=\sqrt{\overline{\alpha}_{t-1}}\vbx_{0\mid t}^\text{guided}+\sqrt{1-\overline{\alpha}_{t-1}-\sigma_t^2}\epsilon_\theta(\vbx_t,t)+\sigma_t\epsilon
-  }
-  Note that the roward function $r$ here needs to be both diffentiable and trained on both unnoised/noised trajectories.
-
-  \textbf{Diffusion-ES}: Standard ES requires a mutation operator, which is typically of the form $x'=x+\sigma\boldsymbol{\epsilon}$, which likely deviates from the manifold of valid trajectories. Diffusion-ES instead partially noises the trajectories via
-  \BE{
-    \overline{x}=\sqrt{\overline{\alpha}_{n_k}}\vbx+\sqrt{1-\overline{\alpha}_{n_k}}\boldsymbol{\epsilon}
-  }
-  for $\boldsymbol{\epsilon}\sim\calN(0,\vbI)$ and then denoises via $x'\sim p_\theta(x\mid\overline{x})$.
+  for $\vbeps\sim\calN(0,\vbI)$ and then denoises via $x'\sim p_\theta(x\mid\overline{x})$.
 
 
 \section{Offline Reinforcement Learning}
@@ -1305,7 +1341,7 @@
   \BI{
   \item Off-policy deep reinforcement learning fails when truly off-policy, even when the algorithm and base dataset are the same. This is due to \textbf{distribution shift} problem: $a'$ is sampled from the policy and out of distribution from the dataset. This leads to overestimation on OOD actions. 
   \item
-    Specifically, suppose we train a reward modelr $\hat{r}_\theta(x,a)$ that approximates $r(x,a)$ in expectation under $p_\text{data}(a,x)$, but is incorrect on unseen actions. The policy then exeploits errors in this reward function.
+    Specifically, suppose we train a reward model $\hat{r}_\theta(x,a)$ that approximates $r(x,a)$ in expectation under $p_\text{data}(a,x)$, but is incorrect on unseen actions. The policy then exploits errors in this reward function.
   }
 
   \textbf{Filtered Behavior Cloning}: A simple baseline is to filter the dataset by taking only top trajectories by reward $\tilde{\calD}=\{\tau\mid r(\tau)>\eta\}$ and train only on those state-action pairs. 
@@ -1446,7 +1482,7 @@
 
 \section{Exploration}
 
-  \textbf{$\boldsymbol{\epsilon}$-greedy Disadvantages}: The probability of identifying a favorable trajectory decreases as the number of actions and the time-horizon until the reward increases.
+  \textbf{$\vbeps$-greedy Disadvantages}: The probability of identifying a favorable trajectory decreases as the number of actions and the time-horizon until the reward increases.
 
   \textbf{Motivation for Exploration}: Motivation can be \textbf{extrinsic}, or driven by some external reward, or \textbf{intrinsic}, being moved to do something because it is inherently enjoyable (e.g., curiosity, exploration, novelty, etc.). The latter is important because it is task independent and free of human supervision.
   \BI{
@@ -1493,7 +1529,7 @@
   }
   (assuming that each bandit is a Bernoulli r.v.). Then, the action selected at each time step is the maximum among all estimated mean rewards. In an infinite horizon setting, the fixed exploration strategy will always exploit.
 
-  \textbf{$\boldsymbol{\epsilon}$-Greedy Action Selection}: In $\epsilon$-greedy, the agent explores with probability $\epsilon$ and explores otherwise. This is the simplest way to balance exploration and exploitation. Constant $\epsilon$ produces linear total regret:
+  \textbf{$\vbeps$-Greedy Action Selection}: In $\epsilon$-greedy, the agent explores with probability $\epsilon$ and explores otherwise. This is the simplest way to balance exploration and exploitation. Constant $\epsilon$ produces linear total regret:
   \BE{
     I_t\geq \f{\epsilon}{K}\sum_{a\in\calA}\Delta_a,
   }
@@ -1767,7 +1803,7 @@
   \textbf{Reward-Weighted Diffusion \cite{lee2023aligning}}: This combined RWR with diffusion-denoising. The weighted diffusion loss is given by:
   % aligning text-to-image models using human feedback
   \BE{
-    \calL_\text{RWR}(\theta)=\Eb_{(\vbx_0,\vbc)\sim p(\vbx_0,c),t\sim\calU[0,T],\vbx_t\sim q(\vbx_t\mid\vbx_0)}\bbb{w(\vbx_0,c)\bnm{\boldsymbol{\tilde{\mu}}(\vbx_0,t)-\boldsymbol{\mu}_\theta(\vbx_0,t)}^2}.
+    \calL_\text{RWR}(\theta)=\Eb_{(\vbx_0,\vbc)\sim p(\vbx_0,c),t\sim\calU[0,T],\vbx_t\sim q(\vbx_t\mid\vbx_0)}\bbb{w(\vbx_0,c)\bnm{\tilde{\vbmu}(\vbx_0,t)-\vbmu_\theta(\vbx_0,t)}^2}.
   }
   To approximate this, we collect human feedback and train a reward model via
   \BE{
